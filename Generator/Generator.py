@@ -53,6 +53,8 @@ class Generator(object):
         Because it should be integer number of boundary particles 
         TODO: more detailed comment...
         '''
+        const = Const()
+        Const.r0_squared = const.scale_r0(3.9)*const.scale_r0(3.9)
         self.p_count = particle_count
         Const.xmax = boxsizeX#( boxsizeX % Const.r0 == 0 ) and boxsizeX or ( int( boxsizeX / Const.r0 ) + 1 ) * Const.r0 # if boxsizeX divides on r0 without rest than XMAX = boxsizeX  
         Const.ymax = boxsizeY#( boxsizeY % Const.r0 == 0 ) and boxsizeY or ( int( boxsizeY / Const.r0 ) + 1 ) * Const.r0 # same

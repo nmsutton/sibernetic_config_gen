@@ -69,3 +69,6 @@ class Const(object):
     BOUNDARY_PARTICLE_COUNT = 0 
     TOTAL_PARTICLE_COUNT = BOUNDARY_PARTICLE_COUNT + PARTICLE_COUNT 
     
+    def scale_r0(self, scalar):
+        r0_scaled = self.r0 * scalar
+        return r0_scaled
