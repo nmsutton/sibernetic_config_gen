@@ -37,8 +37,9 @@ Created on 13.02.2013
 '''
 from Generator.Generator import Generator
 from Generator.Const import Const
+from Generator.ImportConfigSects import ImportConfigSects
 from XMLWriter.XMLWriter import XMLWriter
-import sys
+import sys, getopt
 
 def put_configto_file(generator, filename="./configurations/configuration.txt"):
 	'''
@@ -96,14 +97,34 @@ def create_xml_file(filename,generator):
 	for c in generator.elasticConnections:
 		xml_writer.add_connection(c)
 	xml_writer.printtoFile()
+def return_args():
+	#in_p_file = "/CompNeuro/Software/openworm/sibernetic_config_gen/configurations/position_muscle_copy3.txt"
+	in_file = ''#"/CompNeuro/Software/openworm/sibernetic_config_gen/configurations/position_test5.txt"
+	out_file = ''
+	kwargs, args = getopt.getopt(sys.argv[1:],"i:o:")
+	#print "out:\n\n",kwargs
+	for flag, arg_val in kwargs:
+		if flag == '-i':
+			in_file = arg_val
+		elif flag == '-o':
+			out_file = arg_val
+
+	return in_file, out_file
 if __name__ == '__main__':
 	#g = Generator(120.24, 80.16, 180.36, particle_count = 1024*16)
 	h = 20.0 * Const.h
 	w = 12.0 * Const.h
 	d = 20.0 * Const.h
+	in_file, out_file = return_args()
 	g = Generator(h, w, d)
-	g.genConfiguration(gen_elastic=True,gen_muscle=True,gen_liquid=False)
+	if in_file != '' and out_file != '':
+		g.genConfiguration(gen_elastic=True,gen_muscle=True,gen_liquid=False,import_conf=True,in_file=in_file)
+		put_configto_file_temp(g,"./configurations/position_muscle.txt","./configurations/velocity_muscle.txt","./configurations/connection_muscle.txt")
+		conf_ops = ImportConfigSects()
+		conf_ops.export_conf(out_file=out_file)
+	else:
+		g.genConfiguration(gen_elastic=True,gen_muscle=True,gen_liquid=False)
+		put_configto_file_temp(g,"./configurations/position_muscle.txt","./configurations/velocity_muscle.txt","./configurations/connection_muscle.txt")
 	#put_configto_file(g)
-	put_configto_file_temp(g,"./configurations/position_muscle.txt","./configurations/velocity_muscle.txt","./configurations/connection_muscle.txt")
 	create_xml_file("configuration_xml_test", g)
 	
