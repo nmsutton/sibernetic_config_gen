@@ -64,11 +64,14 @@ class ImportConfigSects(object):
 		output_f = open(out_file,"w")
 
 		output_f.write("0\n")
-		output_f.write("88.844\n")
+		output_f.write("100.2\n") #
+		#output_f.write("88.844\n")
 		output_f.write("0\n")
-		output_f.write("88.8440217622\n")
+		output_f.write("66.8\n") #
+		#output_f.write("88.8440217622\n")
 		output_f.write("0\n")
-		output_f.write("88.8439782378\n")
+		output_f.write("668\n") #"
+		#output_f.write("88.8439782378\n")
 		output_f.write("[position]\n")
 
 		with open(in_p_file, "r") as ins:

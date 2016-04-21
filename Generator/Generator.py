@@ -54,7 +54,8 @@ class Generator(object):
         TODO: more detailed comment...
         '''
         const = Const()
-        Const.r0_squared = const.scale_r0(3.9)*const.scale_r0(3.9)
+        scalar = 1.0#3.9#1.0#0.7#3.9
+        Const.r0_squared = const.scale_r0(scalar)*const.scale_r0(scalar)
         self.p_count = particle_count
         Const.xmax = boxsizeX#( boxsizeX % Const.r0 == 0 ) and boxsizeX or ( int( boxsizeX / Const.r0 ) + 1 ) * Const.r0 # if boxsizeX divides on r0 without rest than XMAX = boxsizeX  
         Const.ymax = boxsizeY#( boxsizeY % Const.r0 == 0 ) and boxsizeY or ( int( boxsizeY / Const.r0 ) + 1 ) * Const.r0 # same
