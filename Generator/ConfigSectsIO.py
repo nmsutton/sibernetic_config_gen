@@ -64,42 +64,25 @@ class ConfigSectsIO(object):
 
 		return bounding_box, particles
 
-	def export_conf(self, out_file, bounding_box):
-		in_p_file = "/CompNeuro/Software/openworm/sibernetic_config_gen/configurations/position_muscle.txt"
-		in_v_file = "/CompNeuro/Software/openworm/sibernetic_config_gen/configurations/velocity_muscle.txt"
-		in_c_file = "/CompNeuro/Software/openworm/sibernetic_config_gen/configurations/connection_muscle.txt"
+	def export_conf(self, out_file, bounding_box, conf_file_group):
 
 		output_f = open(out_file,"w")
 
-		'''output_f.write("0\n")
-		output_f.write("100.2\n") #
-		#output_f.write("88.844\n")
-		output_f.write("0\n")
-		output_f.write("66.8\n") #
-		#output_f.write("88.8440217622\n")
-		output_f.write("0\n")
-		output_f.write("668\n") #"
-		#output_f.write("88.8439782378\n")'''
 		for bb_point in bounding_box:
 			output_f.write(str(bb_point))
 			output_f.write("\n")
 		output_f.write("[position]\n")
 
-		with open(in_p_file, "r") as ins:
-			for line in ins:
-				output_f.write(line)
+		for i in range(len(conf_file_group)):
+			with open(conf_file_group[i], "r") as ins:
+				for line in ins:
+					output_f.write(line)
 
-		output_f.write("[velocity]\n")
+			if i == 0:
+				output_f.write("[velocity]\n")
+			elif i == 1:
+				output_f.write("[connection]\n")
+			elif i == 2:
+				output_f.write("[end]\n")
 
-		with open(in_v_file, "r") as ins:
-			for line in ins:
-				output_f.write(line)
-
-		output_f.write("[connection]\n")
-
-		with open(in_c_file, "r") as ins:
-			for line in ins:
-				output_f.write(line)
-
-		output_f.write("[end]\n")
 		output_f.close()

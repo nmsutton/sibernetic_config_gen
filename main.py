@@ -111,6 +111,10 @@ def return_args():
 
 	return in_file, out_file
 if __name__ == '__main__':
+	p_file = "./configurations/position_muscle.txt"
+	v_file = "./configurations/velocity_muscle.txt"
+	c_file = "./configurations/connection_muscle.txt"
+	conf_file_group = [p_file, v_file, c_file]
 	#g = Generator(120.24, 80.16, 180.36, particle_count = 1024*16)
 	h = 20.0 * Const.h
 	w = 12.0 * Const.h
@@ -122,12 +126,12 @@ if __name__ == '__main__':
 		h, w, d = bounding_box[1:6:2]
 		g = Generator(h, w, d)
 		g.genConfiguration(gen_elastic=True,gen_muscle=True,gen_liquid=False,particles_imported=particles_imported)
-		put_configto_file_temp(g,"./configurations/position_muscle.txt","./configurations/velocity_muscle.txt","./configurations/connection_muscle.txt")
-		conf_ops.export_conf(out_file=out_file, bounding_box=bounding_box)
+		put_configto_file_temp(g,p_file,v_file,c_file)
+		conf_ops.export_conf(out_file=out_file, bounding_box=bounding_box, conf_file_group=conf_file_group)
 	else:
 		g = Generator(h, w, d)
 		g.genConfiguration(gen_elastic=True,gen_muscle=True,gen_liquid=False)
-		put_configto_file_temp(g,"./configurations/position_muscle.txt","./configurations/velocity_muscle.txt","./configurations/connection_muscle.txt")
+		put_configto_file_temp(g,p_file,v_file,c_file)
 	#put_configto_file(g)
 	create_xml_file("configuration_xml_test", g)
 	
