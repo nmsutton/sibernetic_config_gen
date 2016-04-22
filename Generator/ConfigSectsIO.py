@@ -39,31 +39,39 @@ Created on 18.04.2016
 from Particle import Particle, Float4
 from Const import Const
 
-class ImportConfigSects(object):
-	#def __init__(self):
-	#	return none
-	def import_data(self, in_file):
+class ConfigSectsIO(object):
+	def import_conf(self, in_file):
+		boundbox_sect = True
+		particle_sect = False
+		bounding_box = []
 		particles = []
 
 		with open(in_file, "r") as ins:
 			for line in ins:
-				if line.rstrip() != "":
-					#print(line)
+				if line.rstrip() == "[velocity]":
+					particle_sect = False
+				elif line.rstrip() == "[position]":
+					boundbox_sect = False
+					particle_sect = True
+				elif boundbox_sect == True and line.rstrip() != "":
+					bounding_box.append(float(line.rstrip()))					
+				elif particle_sect == True and line.rstrip() != "":
 					p_x,p_y,p_z,p_t = line.rstrip().split("\t")
-					particle = Particle(float(p_x),float(p_y),float(p_z),Const.elastic_particle)
-					particle.setVelocity(Float4(0.0,0.0,0.0,Const.elastic_particle))
+					p_type = "{0:.1g}".format(float(p_t))
+					particle = Particle(float(p_x),float(p_y),float(p_z),p_type)
+					particle.setVelocity(Float4(0.0,0.0,0.0,p_type))
 					particles.append(particle)
 
-		return particles
+		return bounding_box, particles
 
-	def export_conf(self, out_file):
+	def export_conf(self, out_file, bounding_box):
 		in_p_file = "/CompNeuro/Software/openworm/sibernetic_config_gen/configurations/position_muscle.txt"
 		in_v_file = "/CompNeuro/Software/openworm/sibernetic_config_gen/configurations/velocity_muscle.txt"
 		in_c_file = "/CompNeuro/Software/openworm/sibernetic_config_gen/configurations/connection_muscle.txt"
 
 		output_f = open(out_file,"w")
 
-		output_f.write("0\n")
+		'''output_f.write("0\n")
 		output_f.write("100.2\n") #
 		#output_f.write("88.844\n")
 		output_f.write("0\n")
@@ -71,7 +79,10 @@ class ImportConfigSects(object):
 		#output_f.write("88.8440217622\n")
 		output_f.write("0\n")
 		output_f.write("668\n") #"
-		#output_f.write("88.8439782378\n")
+		#output_f.write("88.8439782378\n")'''
+		for bb_point in bounding_box:
+			output_f.write(str(bb_point))
+			output_f.write("\n")
 		output_f.write("[position]\n")
 
 		with open(in_p_file, "r") as ins:

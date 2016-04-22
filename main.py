@@ -37,7 +37,7 @@ Created on 13.02.2013
 '''
 from Generator.Generator import Generator
 from Generator.Const import Const
-from Generator.ImportConfigSects import ImportConfigSects
+from Generator.ConfigSectsIO import ConfigSectsIO
 from XMLWriter.XMLWriter import XMLWriter
 import sys, getopt
 
@@ -116,13 +116,16 @@ if __name__ == '__main__':
 	w = 12.0 * Const.h
 	d = 20.0 * Const.h
 	in_file, out_file = return_args()
-	g = Generator(h, w, d)
 	if in_file != '' and out_file != '':
-		g.genConfiguration(gen_elastic=True,gen_muscle=True,gen_liquid=False,import_conf=True,in_file=in_file)
+		conf_ops = ConfigSectsIO()
+		bounding_box, particles_imported = conf_ops.import_conf(in_file=in_file)
+		h, w, d = bounding_box[1:6:2]
+		g = Generator(h, w, d)
+		g.genConfiguration(gen_elastic=True,gen_muscle=True,gen_liquid=False,particles_imported=particles_imported)
 		put_configto_file_temp(g,"./configurations/position_muscle.txt","./configurations/velocity_muscle.txt","./configurations/connection_muscle.txt")
-		conf_ops = ImportConfigSects()
-		conf_ops.export_conf(out_file=out_file)
+		conf_ops.export_conf(out_file=out_file, bounding_box=bounding_box)
 	else:
+		g = Generator(h, w, d)
 		g.genConfiguration(gen_elastic=True,gen_muscle=True,gen_liquid=False)
 		put_configto_file_temp(g,"./configurations/position_muscle.txt","./configurations/velocity_muscle.txt","./configurations/connection_muscle.txt")
 	#put_configto_file(g)

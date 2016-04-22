@@ -37,7 +37,7 @@ Created on 13.02.2013
 '''
 from Const import Const
 from Particle import Particle, Float4
-from ImportConfigSects import ImportConfigSects
+from ConfigSectsIO import ConfigSectsIO
 import math
 from ElasticConnection import ElasticConnection
 
@@ -54,7 +54,7 @@ class Generator(object):
         TODO: more detailed comment...
         '''
         const = Const()
-        scalar = 1.0#3.9#1.0#0.7#3.9
+        scalar = 1.0#5.0#0000.0#1.0#3.9#1.0#0.7#3.9
         Const.r0_squared = const.scale_r0(scalar)*const.scale_r0(scalar)
         self.p_count = particle_count
         Const.xmax = boxsizeX#( boxsizeX % Const.r0 == 0 ) and boxsizeX or ( int( boxsizeX / Const.r0 ) + 1 ) * Const.r0 # if boxsizeX divides on r0 without rest than XMAX = boxsizeX  
@@ -62,22 +62,21 @@ class Generator(object):
         Const.zmax = boxsizeZ#( boxsizeZ % Const.r0 == 0 ) and boxsizeZ or ( int( boxsizeZ / Const.r0 ) + 1 ) * Const.r0 # same
         self.particles = []
         self.elasticConnections = []
-    def genConfiguration(self, gen_muscle=False,gen_elastic=False,gen_liquid=True,import_conf=False,in_file=''):
+    def genConfiguration(self, gen_muscle=False,gen_elastic=False,gen_liquid=True,particles_imported=[]):
         print "generating configuration"
         print "\tgenerating Elastic Particles"
         i = 0
-        if import_conf:
-            self.nMuscles = 3
-            imported_conf = ImportConfigSects()
-            self.particles = imported_conf.import_data(in_file)
-        else:
+        if not particles_imported:
             if gen_elastic:
                 if gen_muscle:
                     self.nMuscles = 3
                     self.__generateNMuscle()
                 else:
                     self.nMuscles = 0
-                    self.__generateElasticCub()
+                    self.__generateElasticCub()            
+        else:
+            self.nMuscles = 3
+            self.particles = particles_imported
         i = len(self.particles) - i
         i_e = len(self.particles)
         print "\t elastic particle = %s"%(i)
