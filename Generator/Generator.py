@@ -46,7 +46,7 @@ class Generator(object):
     Configuration Generator class: class generate configuration 
     for initial size of box
     '''
-    def __init__(self, boxsizeX, boxsizeY, boxsizeZ, particle_count = 1024 * 16):
+    def __init__(self, boxsizeX, boxsizeY, boxsizeZ, particle_count = 1024 * 16, phy_val = 1.0):
         '''
         Constructor
         It's important that sizes of box are multiple with r0 = h * 0.5
@@ -54,8 +54,8 @@ class Generator(object):
         TODO: more detailed comment...
         '''
         const = Const()
-        scalar = 1.0#5.0#0000.0#1.0#3.9#1.0#0.7#3.9
-        Const.r0_squared = const.scale_r0(scalar)*const.scale_r0(scalar)
+        phy_val = 1.0
+        Const.r0_squared = const.scale_r0(phy_val)*const.scale_r0(phy_val)
         self.p_count = particle_count
         Const.xmax = boxsizeX#( boxsizeX % Const.r0 == 0 ) and boxsizeX or ( int( boxsizeX / Const.r0 ) + 1 ) * Const.r0 # if boxsizeX divides on r0 without rest than XMAX = boxsizeX  
         Const.ymax = boxsizeY#( boxsizeY % Const.r0 == 0 ) and boxsizeY or ( int( boxsizeY / Const.r0 ) + 1 ) * Const.r0 # same

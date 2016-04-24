@@ -101,15 +101,18 @@ def return_args():
 	#in_p_file = "/CompNeuro/Software/openworm/sibernetic_config_gen/configurations/position_muscle_copy3.txt"
 	in_file = ''#"/CompNeuro/Software/openworm/sibernetic_config_gen/configurations/position_test5.txt"
 	out_file = ''
-	kwargs, args = getopt.getopt(sys.argv[1:],"i:o:")
+	phy_file = 1.0
+	kwargs, args = getopt.getopt(sys.argv[1:],"i:p:o:")
 	#print "out:\n\n",kwargs
 	for flag, arg_val in kwargs:
 		if flag == '-i':
 			in_file = arg_val
 		elif flag == '-o':
 			out_file = arg_val
+		elif flag == '-p':
+			phy_val = arg_val
 
-	return in_file, out_file
+	return in_file, out_file, phy_val
 if __name__ == '__main__':
 	p_file = "./configurations/position_muscle.txt"
 	v_file = "./configurations/velocity_muscle.txt"
@@ -119,12 +122,12 @@ if __name__ == '__main__':
 	h = 20.0 * Const.h
 	w = 12.0 * Const.h
 	d = 20.0 * Const.h
-	in_file, out_file = return_args()
+	in_file, out_file, phy_val = return_args()
 	if in_file != '' and out_file != '':
 		conf_ops = ConfigSectsIO()
 		bounding_box, particles_imported = conf_ops.import_conf(in_file=in_file)
 		h, w, d = bounding_box[1:6:2]
-		g = Generator(h, w, d)
+		g = Generator(h, w, d, phy_val=phy_val)
 		g.genConfiguration(gen_elastic=True,gen_muscle=True,gen_liquid=False,particles_imported=particles_imported)
 		put_configto_file_temp(g,p_file,v_file,c_file)
 		conf_ops.export_conf(out_file=out_file, bounding_box=bounding_box, conf_file_group=conf_file_group)
