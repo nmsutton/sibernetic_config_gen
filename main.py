@@ -129,6 +129,7 @@ if __name__ == '__main__':
 		h, w, d = bounding_box[1:6:2]
 		g = Generator(h, w, d, phy_val=phy_val)
 		g.genConfiguration(gen_elastic=True,gen_muscle=True,gen_liquid=False,particles_imported=particles_imported)
+		#g.genConfiguration(gen_elastic=True,gen_muscle=True,gen_liquid=False)
 		put_configto_file_temp(g,p_file,v_file,c_file)
 		conf_ops.export_conf(out_file=out_file, bounding_box=bounding_box, conf_file_group=conf_file_group)
 	else:

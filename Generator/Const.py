@@ -41,7 +41,7 @@ class Const(object):
     Const 
     '''
     h = 3.34
-    r0 = h * 0.5
+    r0 = h * 0.5 #* 200.0
     r0_squared = r0 * r0
     mass = 0.0003#3.25e-14
     #PROPERTY OF BOX

@@ -57,9 +57,9 @@ class ConfigSectsIO(object):
 					bounding_box.append(float(line.rstrip()))					
 				elif particle_sect == True and line.rstrip() != "":
 					p_x,p_y,p_z,p_t = line.rstrip().split("\t")
-					p_type = "{0:.1g}".format(float(p_t))
-					particle = Particle(float(p_x),float(p_y),float(p_z),p_type)
-					particle.setVelocity(Float4(0.0,0.0,0.0,p_type))
+					p_type = "{0:.2g}".format(float(p_t))
+					particle = Particle(float(p_x),float(p_y),float(p_z),float(p_type))
+					particle.setVelocity(Float4(0.0,0.0,0.0,float(p_type)))
 					particles.append(particle)
 
 		return bounding_box, particles
