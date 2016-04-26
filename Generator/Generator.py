@@ -54,9 +54,7 @@ class Generator(object):
         TODO: more detailed comment...
         '''
         const = Const()
-        #phy_val = 3.9#200.0
         Const.r0_squared = const.scale_r0(phy_val)*const.scale_r0(phy_val)
-        #Const.r0_squared *= 20000.0#3.9
         self.p_count = particle_count
         Const.xmax = boxsizeX#( boxsizeX % Const.r0 == 0 ) and boxsizeX or ( int( boxsizeX / Const.r0 ) + 1 ) * Const.r0 # if boxsizeX divides on r0 without rest than XMAX = boxsizeX  
         Const.ymax = boxsizeY#( boxsizeY % Const.r0 == 0 ) and boxsizeY or ( int( boxsizeY / Const.r0 ) + 1 ) * Const.r0 # same
@@ -78,20 +76,8 @@ class Generator(object):
         else:
             self.nMuscles = 3
             self.particles = particles_imported
-        print "part import "
-        print len(particles_imported)
-        print "part import2 "
-        print len(self.particles) - i
         i = len(self.particles) - i
-        print "self.particles[0].type "
-        print self.particles[0].type
-        print "self.particles[0].type == Const.elastic_particle "
-        print self.particles[0].type == Const.elastic_particle
-        print "self.particles[0].type - Const.elastic_particle "
-        print float(self.particles[0].type) - Const.elastic_particle
         i_e = len(self.particles)
-        print "\t elastic particle = %s"%(i)
-        print "\tgenerated"
         if gen_liquid:
             print "\tgenerate Liquid Particles"
             self.__generateLiquidCube()
