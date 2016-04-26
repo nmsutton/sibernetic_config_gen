@@ -9,12 +9,10 @@
 <br>c = val1
 <br>d = val2
 
-particle_j = ID of particle .  ID is an index for the particles
+particle_j = ID of particle
 
 r_ij = distance * Const.simulationScale
-where distance is the distance between particle i and j .
+where distance is
 
-val1 and val2 are values that effect the amount of elastic connection
-created.
 
 Note: details here derived from [main.py](https://github.com/openworm/sibernetic_config_gen/blob/master/main.py).
