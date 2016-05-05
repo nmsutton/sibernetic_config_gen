@@ -80,8 +80,8 @@ class ConfigSectsIO(object):
 	def import_collada(self, col_file):
 		print("collada import")
 		particle_sect = False
-		#bounding_box = [-300, 100.2, -266, 66.8, -300, 668]
-		bounding_box = [0, 133.6, 0, 160.32, 0, 66.8]
+		bounding_box = [0, 100.2, 0, 66.8, 0, 668]
+		#bounding_box = [0, 133.6, 0, 160.32, 0, 66.8]
 		#remove_text = "          <float_array id="Sphere-mesh-positions-array" count="2598">"
 #		start_pos_section = "        <source id=\"Sphere_001-mesh-positions\">"
 		start_pos_section = re.compile(".*<float_array id=\".*positions-array\" count=\"\d+\">.*")
@@ -95,6 +95,7 @@ class ConfigSectsIO(object):
 		particles = []
 		unsorted_connections = []
 		elastic_connections_collection = []
+		nMuscles = 1
 
 		with open(col_file, "r") as ins:
 			for line in ins:
@@ -129,7 +130,7 @@ class ConfigSectsIO(object):
 						# add blanks
 					for p_i in range(len(particles)):
 						total_conn = 0
-						val1 = 1.0
+						#val1 = 1.0
 						found_j = []
 						for con_i in range(len(unsorted_connections)):
 							#part_j_i = int(unsorted_connections[con_i].particle_j - 0.1)
@@ -140,6 +141,16 @@ class ConfigSectsIO(object):
 									part_j = particles[j_index]
 									#elastic_connections_collection.append(unsorted_connections[con_i])
 									if not j_index in found_j:
+										val1 = 0
+										dx2 = part_i.position.x - part_j.position.x
+										dy2 = part_i.position.y - part_j.position.y
+										dz2 = part_i.position.z - part_j.position.z
+										dx2 *= dx2
+										dy2 *= dy2
+										dz2 *= dz2 
+										nMi = particles.index(part_i)*nMuscles/len(particles);
+										val1 = (1.1+nMi)*float((dz2 > 100*dx2)and(dz2 > 100*dy2))  
+
 										elastic_connections_collection.append( ElasticConnection(particles.index(part_j),Particle.distBetween_particles(part_j,part_i), val1, 0) )
 										found_j.append(j_index)
 										total_conn += 1

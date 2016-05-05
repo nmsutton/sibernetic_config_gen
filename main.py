@@ -119,7 +119,7 @@ if __name__ == '__main__':
 	p_file = "./configurations/position_muscle.txt"
 	v_file = "./configurations/velocity_muscle.txt"
 	c_file = "./configurations/connection_muscle.txt"
-	col_file = "/CompNeuro/Software/openworm/general/current_3d/new_worm7.dae"
+	col_file = "/CompNeuro/Software/openworm/general/current_3d/new_worm9.dae"
 	conf_file_group = [p_file, v_file, c_file]
 	#g = Generator(120.24, 80.16, 180.36, particle_count = 1024*16)
 	h = 20.0 * Const.h
