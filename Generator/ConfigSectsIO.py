@@ -38,6 +38,8 @@ Created on 18.04.2016
 #from Generator import Generator
 from Particle import Particle, Float4
 from Const import Const
+from ElasticConnection import ElasticConnection
+import re
 
 class ConfigSectsIO(object):
 	def import_conf(self, in_file):
@@ -63,6 +65,87 @@ class ConfigSectsIO(object):
 					particles.append(particle)
 
 		return bounding_box, particles
+
+	def import_part_phys(self, phy_file=''):
+		part_phys_mod = []
+
+		with open(phy_file, "r") as ins:
+			for line in ins:			
+				if line.rstrip() != "":
+					p_i, p_v = line.rstrip().split("\t")
+					part_phys_mod.append(float(p_v))
+
+		return part_phys_mod	
+
+	def import_collada(self, col_file):
+		print("collada import")
+		particle_sect = False
+		#bounding_box = [-300, 100.2, -266, 66.8, -300, 668]
+		bounding_box = [0, 133.6, 0, 160.32, 0, 66.8]
+		#remove_text = "          <float_array id="Sphere-mesh-positions-array" count="2598">"
+#		start_pos_section = "        <source id=\"Sphere_001-mesh-positions\">"
+		start_pos_section = re.compile(".*<float_array id=\".*positions-array\" count=\"\d+\">.*")
+		#end_pos_section = "          <technique_common>"
+		tris_section = re.compile("\s+<p>(.*)</p>")
+		#tris_triplet = re.compile("(.*\>)?(\S+)\s(\S+)\s(\S+)\s(\S+)\s(\S+)\s(\S+)\s?[<]?(.*)?")
+		tris_triplet = re.compile("(\S+)\s(\S+)\s(\S+)\s(\S+)\s(\S+)\s(\S+)\s?")
+		xml_pattern = "(.*[>])+(.*)([<].*)+"
+		vertex_pattern = "(\S+)\s(\S+)\s(\S+)(\s?)"
+		p_type = 2.1
+		particles = []
+		unsorted_connections = []
+		elastic_connections_collection = []
+
+		with open(col_file, "r") as ins:
+			for line in ins:
+				if start_pos_section.match(line.rstrip()):#particle_sect == True and line.rstrip() != "":
+					for xml in re.finditer(xml_pattern, line.rstrip()):
+						#print(xml.group(2))
+						for vertex in re.finditer(vertex_pattern, xml.group(2)):
+							#print(vertex.group(0))
+							p_x = vertex.group(1)
+							p_y = vertex.group(2)
+							p_z = vertex.group(3)
+							#p_x,p_y,p_z,blank = vertex.group(0).split(" ")
+							#print(p_x)							
+							particle = Particle(float(p_x),float(p_y),float(p_z),float(p_type))
+							particle.setVelocity(Float4(0.0,0.0,0.0,float(p_type)))
+							particles.append(particle)				
+				elif tris_section.match(line.rstrip()):
+					print("particles:")
+					print(len(particles))
+					for tris in re.finditer(tris_triplet, tris_section.match(line.rstrip()).group(1)):
+						#print(tris.group(0))
+						particle_i_group = [ int(tris.group(1)), int(tris.group(1)), int(tris.group(3)) ]
+						particle_j_group = [ int(tris.group(3)), int(tris.group(5)), int(tris.group(5)) ]
+						val1 = 0.0
+						for p_index in range(len(particle_j_group)):
+							part_i = particles[particle_i_group[p_index]]
+							part_j = particles[particle_j_group[p_index]]
+							unsorted_connections.append([[int(tris.group(1)),int(tris.group(3))],[int(tris.group(1)),int(tris.group(5))],[int(tris.group(3)),int(tris.group(5))]])
+							#unsorted_connections.append( ElasticConnection(particles.index(part_j),Particle.distBetween_particles(part_j,part_i), val1, 0) )
+							#elastic_connections_collection.append( ElasticConnection(particles.index(part_j),Particle.distBetween_particles(part_j,part_i), val1, 0) )
+						
+						# add blanks
+					for p_i in range(len(particles)):
+						total_conn = 0
+						val1 = 1.0
+						found_j = []
+						for con_i in range(len(unsorted_connections)):
+							#part_j_i = int(unsorted_connections[con_i].particle_j - 0.1)
+							for connection in unsorted_connections[con_i]:
+								if (p_i == connection[0] or p_i == connection[1]) and (total_conn < Const.MAX_NUM_OF_NEIGHBOUR):
+									part_i = particles[p_i]
+									j_index = (p_i == connection[0]) and connection[1] or connection[0]
+									part_j = particles[j_index]
+									#elastic_connections_collection.append(unsorted_connections[con_i])
+									if not j_index in found_j:
+										elastic_connections_collection.append( ElasticConnection(particles.index(part_j),Particle.distBetween_particles(part_j,part_i), val1, 0) )
+										found_j.append(j_index)
+										total_conn += 1
+						elastic_connections_collection.extend([ElasticConnection(Const.NO_PARTICEL_ID,0,0,0)] * (Const.MAX_NUM_OF_NEIGHBOUR - total_conn))#len(particle_i_group)) )
+
+		return bounding_box, particles, elastic_connections_collection
 
 	def export_conf(self, out_file, bounding_box, conf_file_group):
 

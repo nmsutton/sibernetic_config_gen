@@ -10,9 +10,9 @@ Upon running the project sibernetic_config_gen 3 files are created, ./configurat
 <br>0
 <br>668
 <br>[position]
-<br><position_muscle.txt contents>
+<br>position_muscle.txt contents
 <br>[velocity]
-<br><velocity_muscle.txt contents>
+<br>velocity_muscle.txt contents
 <br>[connection]
-<br><connection_muscle.txt contents>
+<br>connection_muscle.txt contents
 <br>[end]

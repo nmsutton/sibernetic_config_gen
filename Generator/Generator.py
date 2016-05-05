@@ -61,11 +61,13 @@ class Generator(object):
         Const.zmax = boxsizeZ#( boxsizeZ % Const.r0 == 0 ) and boxsizeZ or ( int( boxsizeZ / Const.r0 ) + 1 ) * Const.r0 # same
         self.particles = []
         self.elasticConnections = []
-    def genConfiguration(self, gen_muscle=False,gen_elastic=False,gen_liquid=True,particles_imported=[]):
+    def genConfiguration(self, gen_muscle=False,gen_elastic=False,gen_liquid=True, \
+            particles_imported=[],part_phys_mod=[],connections_imported=[]):
         print "generating configuration"
         print "\tgenerating Elastic Particles"
         i = 0
         if not particles_imported:
+            print("imported particles not found")
             if gen_elastic:
                 if gen_muscle:
                     self.nMuscles = 3
@@ -74,6 +76,7 @@ class Generator(object):
                     self.nMuscles = 0
                     self.__generateElasticCub()            
         else:
+            print("imported particles found")
             self.nMuscles = 3
             self.particles = particles_imported
         i = len(self.particles) - i
@@ -84,12 +87,17 @@ class Generator(object):
             i = len(self.particles) - i
             print "\t liquid particle = %s"%(i)
             print "\tgenerated"
-        if gen_elastic:
-            print "\tgenerating Elastic Connections"
-            elasticParticles = [p for p in self.particles if p.type == Const.elastic_particle ]
-            for e_p in elasticParticles:
-                self.__genElasticConn(e_p, elasticParticles)
-            print len(self.elasticConnections)
+        if not connections_imported:
+            if gen_elastic:
+                print "\tgenerating Elastic Connections"
+                elasticParticles = [p for p in self.particles if p.type == Const.elastic_particle ]
+                #print("elasticParticles")
+                #print len(elasticParticles)
+                for e_p_i in range(len(elasticParticles)):
+                    self.__genElasticConn(elasticParticles[e_p_i], elasticParticles, part_phys_mod)
+                print len(self.elasticConnections)
+        else:
+            self.elasticConnections = connections_imported
         print "\tgenerating Boundary Particles"        
         self.__generateBoundaryParticles()
         i = len(self.particles) - i - i_e
@@ -349,13 +357,19 @@ class Generator(object):
                         particle.setVelocity(Float4(0.0,0.0,0.0,Const.elastic_particle))
                         self.particles.append(particle)
 
-    def __genElasticConn(self, particle, elasticParticles):
+    def __genElasticConn(self, particle, elasticParticles, part_phys_mod):
         '''
         Find elastc neighbour for particle
         extend elastic connections list
-        '''
+        '''        
         nMi = elasticParticles.index(particle)*self.nMuscles/len(elasticParticles);
-        neighbour_collection = [p for p in elasticParticles if Particle.dot_particles(particle, p) <= Const.r0_squared * 3.05 and p != particle ]
+        neighbour_collection = []
+        for p_i in range(len(elasticParticles)):
+            p = elasticParticles[p_i]
+            #if Particle.dot_particles(particle, p) <= (part_phys_mod[p_i]*part_phys_mod[p_i]) * 3.05 and p != particle:
+            if Particle.dot_particles(particle, p) <= 1 * 3.05 and p != particle:
+                neighbour_collection.append(p)
+        #neighbour_collection = [p for p in elasticParticles if Particle.dot_particles(particle, p) <= mod_squared_r0 * 3.05 and p != particle ]
         neighbour_collection.sort(key=lambda p: Particle.distBetween_particles(particle, p))
         if len(neighbour_collection) > Const.MAX_NUM_OF_NEIGHBOUR:
             neighbour_collection = neighbour_collection[0:Const.MAX_NUM_OF_NEIGHBOUR]
