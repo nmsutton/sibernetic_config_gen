@@ -61,6 +61,8 @@ class Generator(object):
         Const.zmax = boxsizeZ#( boxsizeZ % Const.r0 == 0 ) and boxsizeZ or ( int( boxsizeZ / Const.r0 ) + 1 ) * Const.r0 # same
         self.particles = []
         self.elasticConnections = []
+        self.membranes = []
+        self.part_memb_index = []
     def genConfiguration(self, gen_muscle=False,gen_elastic=False,gen_liquid=True, \
             particles_imported=[],part_phys_mod=[],connections_imported=[]):
         print "generating configuration"

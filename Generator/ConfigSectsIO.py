@@ -94,6 +94,8 @@ class ConfigSectsIO(object):
 		p_type = 2.1
 		particles = []
 		unsorted_connections = []
+		membranes = []
+		parm_memb_index = []
 		elastic_connections_collection = []
 		nMuscles = 1
 
@@ -116,7 +118,7 @@ class ConfigSectsIO(object):
 					print("particles:")
 					print(len(particles))
 					for tris in re.finditer(tris_triplet, tris_section.match(line.rstrip()).group(1)):
-						#print(tris.group(0))
+						# create elastic connections
 						particle_i_group = [ int(tris.group(1)), int(tris.group(1)), int(tris.group(3)) ]
 						particle_j_group = [ int(tris.group(3)), int(tris.group(5)), int(tris.group(5)) ]
 						val1 = 0.0
@@ -126,7 +128,11 @@ class ConfigSectsIO(object):
 							unsorted_connections.append([[int(tris.group(1)),int(tris.group(3))],[int(tris.group(1)),int(tris.group(5))],[int(tris.group(3)),int(tris.group(5))]])
 							#unsorted_connections.append( ElasticConnection(particles.index(part_j),Particle.distBetween_particles(part_j,part_i), val1, 0) )
 							#elastic_connections_collection.append( ElasticConnection(particles.index(part_j),Particle.distBetween_particles(part_j,part_i), val1, 0) )
-						
+
+						# create membranes
+						membrane_triple = [int(tris.group(1)), int(tris.group(3)), int(tris.group(5))]
+						if not membrane_triple in membranes:
+							membranes.append(membrane_triple)
 						# add blanks
 					for p_i in range(len(particles)):
 						total_conn = 0
@@ -156,7 +162,30 @@ class ConfigSectsIO(object):
 										total_conn += 1
 						elastic_connections_collection.extend([ElasticConnection(Const.NO_PARTICEL_ID,0,0,0)] * (Const.MAX_NUM_OF_NEIGHBOUR - total_conn))#len(particle_i_group)) )
 
-		return bounding_box, particles, elastic_connections_collection
+			# create pmis
+			print("particles:")
+			print(float(len(particles)))
+			for p_i in range(len(particles)):
+				pmi_group = []
+				for m_i in range(len(membranes)):
+					for memb_vert in membranes[m_i]:
+						if p_i == memb_vert and len(pmi_group) < Const.MAX_MEMBRANES_INCLUDING_SAME_PARTICLE:
+							pmi_group.append(m_i)
+
+				for pmi_i in pmi_group:
+					parm_memb_index.append(pmi_i)
+
+				#parm_memb_index.extend([-1] * 
+				for blank_i in range(Const.MAX_MEMBRANES_INCLUDING_SAME_PARTICLE - len(pmi_group)):
+					parm_memb_index.append(-1)
+
+				'''for i in range(7):
+					parm_memb_index.append(-1)'''
+
+			print("parm_memb_index:")
+			print(len(parm_memb_index)/float(Const.MAX_MEMBRANES_INCLUDING_SAME_PARTICLE))	
+
+		return bounding_box, particles, elastic_connections_collection, membranes, parm_memb_index
 
 	def export_conf(self, out_file, bounding_box, conf_file_group):
 
@@ -177,6 +206,10 @@ class ConfigSectsIO(object):
 			elif i == 1:
 				output_f.write("[connection]\n")
 			elif i == 2:
+				output_f.write("[membranes]\n")
+			elif i == 3:
+				output_f.write("[particleMemIndex]\n")								
+			elif i == 4:
 				output_f.write("[end]\n")
 
 		output_f.close()

@@ -68,6 +68,8 @@ class Const(object):
     '''
     BOUNDARY_PARTICLE_COUNT = 0 
     TOTAL_PARTICLE_COUNT = BOUNDARY_PARTICLE_COUNT + PARTICLE_COUNT 
+    #PROPERTIES OF MEMBRANES
+    MAX_MEMBRANES_INCLUDING_SAME_PARTICLE = 7
     
     def scale_r0(self, scalar):
         r0_scaled = self.r0 * float(scalar)
