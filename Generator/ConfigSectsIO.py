@@ -94,19 +94,34 @@ class ConfigSectsIO(object):
 		'''
 		Importing boundry box assumes box verticies are in collada file in format vertice 1-8 =
 		(0 0 0) (0 0 1) (0 1 0) (0 1 1) (1 0 0) (1 0 1) (1 1 0) (1 1 1)
+
+		Collada transforms work as follows:
+		<matrix>
+		 1.0 0.0 0.0 2.0 # x moves 1*2 further
+		 0.0 1.0 0.0 3.0 # y moves 1*3 further
+		 0.0 0.0 1.0 4.0 # z moves 1*4 further
+		 0.0 0.0 0.0 1.0 # x,y,z moves 0*1 further
+		</matrix> 
+		NOTE: unclear if row 4 applies translation uniformly or along individual axes.
+		Assuming individual axes for now, such as <x,y,z,s> and x moves x*s further.
 		'''
 		print("collada import")
-		boundry_box = [0, 100.2, 0, 66.8, 0, 668]
+		boundry_box = [0, 100.2, 0, 66.8, 0, 668] #default
 		boundry_parts = []
 		elast_pos_section = re.compile(".*<float_array id=\"(elastic.*)positions-array\" count=\"\d+\">.*")
 		liquid_pos_section = re.compile(".*<float_array id=\"(liquid.*)positions-array\" count=\"\d+\">.*")
 		bound_pos_section = re.compile(".*<float_array id=\"(boundry.*)positions-array\" count=\"\d+\">.*")
-		section_coords = []
+		boundry_pattern = re.compile("boundry.*")
+		section_coords = []		
+		transf_section = re.compile(".*<node id=\".*\" name=\"(.*)\" type=\"NODE\">")
+		tran_matrix_sect = re.compile("<matrix sid=\"transform\">(.*)</matrix>")
+		transformations = []
 		elastic_found = False
 		tris_section = re.compile("\s+<p>(.*)</p>")
 		tris_triplet = re.compile("(\S+)\s(\S+)\s(\S+)\s(\S+)\s(\S+)\s(\S+)\s?")
 		xml_pattern = "(.*[>])+(.*)([<].*)+"
 		vertex_pattern = "(\S+)\s(\S+)\s(\S+)(\s?)"
+		current_transf_name = ""
 		particles = []
 		unsorted_connections = []
 		membranes = []
@@ -118,26 +133,42 @@ class ConfigSectsIO(object):
 			for line in ins:
 				if elast_pos_section.match(line.rstrip()):
 					p_type = 2.1
-					particles.extend(self.extract_particles(p_type, line, xml_pattern, vertex_pattern))
-					print("particles::")
-					print(len(particles))
+					new_particles = self.extract_particles(p_type, line, xml_pattern, vertex_pattern)
+					particles.extend(new_particles)
 					elastic_found = True	
+
+					object_3d_name = elast_pos_section.match(line.rstrip()).group(1)
+					section_coords.append([object_3d_name, (len(particles) - len(new_particles) - 1), (len(particles) - 1)])
 				elif liquid_pos_section.match(line.rstrip()):
 					p_type = 1.1
-					particles.extend(self.extract_particles(p_type, line, xml_pattern, vertex_pattern))
+					new_particles = self.extract_particles(p_type, line, xml_pattern, vertex_pattern)
+					particles.extend(new_particles)
+
+					object_3d_name = liquid_pos_section.match(line.rstrip()).group(1)
+					section_coords.append([object_3d_name, (len(particles) - len(new_particles) - 1), (len(particles) - 1)])
 				elif bound_pos_section.match(line.rstrip()):
 					p_type = 3.1
-					boundry_parts.extend(self.extract_particles(p_type, line, xml_pattern, vertex_pattern))
+					new_particles = self.extract_particles(p_type, line, xml_pattern, vertex_pattern)
+					boundry_parts.extend(new_particles)
 					x1 = boundry_parts[0].position.x
 					x2 = boundry_parts[4].position.x
 					y1 = boundry_parts[0].position.y
 					y2 = boundry_parts[2].position.y
 					z1 = boundry_parts[0].position.z
 					z2 = boundry_parts[1].position.z		
-					boundry_box = [x1, x2, y1, y2, z1, z2]								
+					boundry_box = [x1, x2, y1, y2, z1, z2]			
+
+					object_3d_name = bound_pos_section.match(line.rstrip()).group(1)
+					section_coords.append([object_3d_name, (len(particles) - len(new_particles) - 1), (len(particles) - 1)])
+				elif transf_section.match(line.rstrip()):
+					current_transf_name = transf_section.match(line.rstrip()).group(1)
+				elif tran_matrix_sect.match(line.rstrip()):
+					trans_entry = [current_transf_name]
+					trans_coords = tran_matrix_sect.match(line.rstrip()).group(1)
+					trans_entry.append(trans_coords.split(' '))
+					trans_entry.append(trans_entry)
+					transformations.append(trans_entry)
 				elif tris_section.match(line.rstrip()) and elastic_found == True:
-					print("particles:")
-					print(len(particles))
 					for tris in re.finditer(tris_triplet, tris_section.match(line.rstrip()).group(1)):
 						# create elastic connections
 						particle_i_group = [ int(tris.group(1)), int(tris.group(1)), int(tris.group(3)) ]
@@ -147,8 +178,6 @@ class ConfigSectsIO(object):
 							part_i = particles[particle_i_group[p_index]]
 							part_j = particles[particle_j_group[p_index]]
 							unsorted_connections.append([[int(tris.group(1)),int(tris.group(3))],[int(tris.group(1)),int(tris.group(5))],[int(tris.group(3)),int(tris.group(5))]])
-							#unsorted_connections.append( ElasticConnection(particles.index(part_j),Particle.distBetween_particles(part_j,part_i), val1, 0) )
-							#elastic_connections_collection.append( ElasticConnection(particles.index(part_j),Particle.distBetween_particles(part_j,part_i), val1, 0) )
 
 						# create membranes
 						membrane_triple = [int(tris.group(1)), int(tris.group(3)), int(tris.group(5))]
@@ -160,13 +189,11 @@ class ConfigSectsIO(object):
 						#val1 = 1.0
 						found_j = []
 						for con_i in range(len(unsorted_connections)):
-							#part_j_i = int(unsorted_connections[con_i].particle_j - 0.1)
 							for connection in unsorted_connections[con_i]:
 								if (p_i == connection[0] or p_i == connection[1]) and (total_conn < Const.MAX_NUM_OF_NEIGHBOUR):
 									part_i = particles[p_i]
 									j_index = (p_i == connection[0]) and connection[1] or connection[0]
 									part_j = particles[j_index]
-									#elastic_connections_collection.append(unsorted_connections[con_i])
 									if not j_index in found_j:
 										val1 = 0
 										dx2 = part_i.position.x - part_j.position.x
@@ -197,15 +224,35 @@ class ConfigSectsIO(object):
 				for pmi_i in pmi_group:
 					parm_memb_index.append(pmi_i)
 
-				#parm_memb_index.extend([-1] * 
 				for blank_i in range(Const.MAX_MEMBRANES_INCLUDING_SAME_PARTICLE - len(pmi_group)):
 					parm_memb_index.append(-1)
 
-				'''for i in range(7):
-					parm_memb_index.append(-1)'''
-
 			print("parm_memb_index:")
-			print(len(parm_memb_index)/float(Const.MAX_MEMBRANES_INCLUDING_SAME_PARTICLE))	
+			print(len(parm_memb_index)/float(Const.MAX_MEMBRANES_INCLUDING_SAME_PARTICLE))
+
+			# transforms	
+			for trans in transformations:
+				for sect in section_coords:
+					trans_3d_object = trans[0]
+					sect_3d_object = sect[0]
+					x_trans = (float(trans[0])*float(trans[3])) + (float(trans[12])*float(trans[15]))
+					y_trans = (float(trans[5])*float(trans[7])) + (float(trans[13])*float(trans[15]))
+					z_trans	= (float(trans[10])*float(trans[11])) + (float(trans[14])*float(trans[15]))				
+					if trans_3d_object == sect_3d_object and boundry_pattern.match(trans_3d_object):
+						boundry_box[0] += x_trans
+						boundry_box[1] += x_trans
+						boundry_box[2] += y_trans
+						boundry_box[3] += y_trans
+						boundry_box[4] += z_trans
+						boundry_box[5] += z_trans
+					elif trans_3d_object == sect_3d_object:
+						sect_start = sect[1]
+						sect_end = sect[2]
+						for i in range(sect_end-sect_start+1):
+							offset_i = i+sect_start
+							particles[offset_i].position.x += x_trans
+							particles[offset_i].position.y += y_trans
+							particles[offset_i].position.z += z_trans
 
 		return boundry_box, particles, elastic_connections_collection, membranes, parm_memb_index
 
