@@ -45,7 +45,7 @@ class ConfigSectsIO(object):
 	def import_conf(self, in_file):
 		boundbox_sect = True
 		particle_sect = False
-		bounding_box = []
+		boundry_box = []
 		particles = []
 
 		with open(in_file, "r") as ins:
@@ -56,7 +56,7 @@ class ConfigSectsIO(object):
 					boundbox_sect = False
 					particle_sect = True
 				elif boundbox_sect == True and line.rstrip() != "":
-					bounding_box.append(float(line.rstrip()))					
+					boundry_box.append(float(line.rstrip()))					
 				elif particle_sect == True and line.rstrip() != "":
 					p_x,p_y,p_z,p_t = line.rstrip().split("\t")
 					p_type = "{0:.2g}".format(float(p_t))
@@ -64,7 +64,7 @@ class ConfigSectsIO(object):
 					particle.setVelocity(Float4(0.0,0.0,0.0,float(p_type)))
 					particles.append(particle)
 
-		return bounding_box, particles
+		return boundry_box, particles
 
 	def import_part_phys(self, phy_file=''):
 		part_phys_mod = []
@@ -77,21 +77,36 @@ class ConfigSectsIO(object):
 
 		return part_phys_mod	
 
+	def extract_particles(self, p_type, line, xml_pattern, vertex_pattern):
+		particles = []
+		for xml in re.finditer(xml_pattern, line.rstrip()):
+			for vertex in re.finditer(vertex_pattern, xml.group(2)):
+				p_x = vertex.group(1)
+				p_y = vertex.group(2)
+				p_z = vertex.group(3)						
+				particle = Particle(float(p_x),float(p_y),float(p_z),float(p_type))
+				particle.setVelocity(Float4(0.0,0.0,0.0,float(p_type)))
+				particles.append(particle)		
+
+		return particles
+
 	def import_collada(self, col_file):
+		'''
+		Importing boundry box assumes box verticies are in collada file in format vertice 1-8 =
+		(0 0 0) (0 0 1) (0 1 0) (0 1 1) (1 0 0) (1 0 1) (1 1 0) (1 1 1)
+		'''
 		print("collada import")
-		particle_sect = False
-		bounding_box = [0, 100.2, 0, 66.8, 0, 668]
-		#bounding_box = [0, 133.6, 0, 160.32, 0, 66.8]
-		#remove_text = "          <float_array id="Sphere-mesh-positions-array" count="2598">"
-#		start_pos_section = "        <source id=\"Sphere_001-mesh-positions\">"
-		start_pos_section = re.compile(".*<float_array id=\".*positions-array\" count=\"\d+\">.*")
-		#end_pos_section = "          <technique_common>"
+		boundry_box = [0, 100.2, 0, 66.8, 0, 668]
+		boundry_parts = []
+		elast_pos_section = re.compile(".*<float_array id=\"(elastic.*)positions-array\" count=\"\d+\">.*")
+		liquid_pos_section = re.compile(".*<float_array id=\"(liquid.*)positions-array\" count=\"\d+\">.*")
+		bound_pos_section = re.compile(".*<float_array id=\"(boundry.*)positions-array\" count=\"\d+\">.*")
+		section_coords = []
+		elastic_found = False
 		tris_section = re.compile("\s+<p>(.*)</p>")
-		#tris_triplet = re.compile("(.*\>)?(\S+)\s(\S+)\s(\S+)\s(\S+)\s(\S+)\s(\S+)\s?[<]?(.*)?")
 		tris_triplet = re.compile("(\S+)\s(\S+)\s(\S+)\s(\S+)\s(\S+)\s(\S+)\s?")
 		xml_pattern = "(.*[>])+(.*)([<].*)+"
 		vertex_pattern = "(\S+)\s(\S+)\s(\S+)(\s?)"
-		p_type = 2.1
 		particles = []
 		unsorted_connections = []
 		membranes = []
@@ -101,20 +116,26 @@ class ConfigSectsIO(object):
 
 		with open(col_file, "r") as ins:
 			for line in ins:
-				if start_pos_section.match(line.rstrip()):#particle_sect == True and line.rstrip() != "":
-					for xml in re.finditer(xml_pattern, line.rstrip()):
-						#print(xml.group(2))
-						for vertex in re.finditer(vertex_pattern, xml.group(2)):
-							#print(vertex.group(0))
-							p_x = vertex.group(1)
-							p_y = vertex.group(2)
-							p_z = vertex.group(3)
-							#p_x,p_y,p_z,blank = vertex.group(0).split(" ")
-							#print(p_x)							
-							particle = Particle(float(p_x),float(p_y),float(p_z),float(p_type))
-							particle.setVelocity(Float4(0.0,0.0,0.0,float(p_type)))
-							particles.append(particle)				
-				elif tris_section.match(line.rstrip()):
+				if elast_pos_section.match(line.rstrip()):
+					p_type = 2.1
+					particles.extend(self.extract_particles(p_type, line, xml_pattern, vertex_pattern))
+					print("particles::")
+					print(len(particles))
+					elastic_found = True	
+				elif liquid_pos_section.match(line.rstrip()):
+					p_type = 1.1
+					particles.extend(self.extract_particles(p_type, line, xml_pattern, vertex_pattern))
+				elif bound_pos_section.match(line.rstrip()):
+					p_type = 3.1
+					boundry_parts.extend(self.extract_particles(p_type, line, xml_pattern, vertex_pattern))
+					x1 = boundry_parts[0].position.x
+					x2 = boundry_parts[4].position.x
+					y1 = boundry_parts[0].position.y
+					y2 = boundry_parts[2].position.y
+					z1 = boundry_parts[0].position.z
+					z2 = boundry_parts[1].position.z		
+					boundry_box = [x1, x2, y1, y2, z1, z2]								
+				elif tris_section.match(line.rstrip()) and elastic_found == True:
 					print("particles:")
 					print(len(particles))
 					for tris in re.finditer(tris_triplet, tris_section.match(line.rstrip()).group(1)):
@@ -161,6 +182,7 @@ class ConfigSectsIO(object):
 										found_j.append(j_index)
 										total_conn += 1
 						elastic_connections_collection.extend([ElasticConnection(Const.NO_PARTICEL_ID,0,0,0)] * (Const.MAX_NUM_OF_NEIGHBOUR - total_conn))#len(particle_i_group)) )
+					elastic_found = False
 
 			# create pmis
 			print("particles:")
@@ -185,13 +207,13 @@ class ConfigSectsIO(object):
 			print("parm_memb_index:")
 			print(len(parm_memb_index)/float(Const.MAX_MEMBRANES_INCLUDING_SAME_PARTICLE))	
 
-		return bounding_box, particles, elastic_connections_collection, membranes, parm_memb_index
+		return boundry_box, particles, elastic_connections_collection, membranes, parm_memb_index
 
-	def export_conf(self, out_file, bounding_box, conf_file_group):
+	def export_conf(self, out_file, boundry_box, conf_file_group):
 
 		output_f = open(out_file,"w")
 
-		for bb_point in bounding_box:
+		for bb_point in boundry_box:
 			output_f.write(str(bb_point))
 			output_f.write("\n")
 		output_f.write("[position]\n")
