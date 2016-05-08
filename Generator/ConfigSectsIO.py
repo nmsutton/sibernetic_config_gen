@@ -90,10 +90,51 @@ class ConfigSectsIO(object):
 
 		return particles
 
+	def translate_mesh(self, trans_type, trans, sect, boundry_pattern, boundry_box, particles):
+		trans_3d_object = trans[0]
+		sect_3d_object = sect[0]
+		x_trans = float(trans[1])
+		y_trans = float(trans[2])
+		z_trans	= float(trans[3])
+		print (trans_3d_object, " ", sect_3d_object)
+		if trans_3d_object == sect_3d_object and boundry_pattern.match(trans_3d_object):
+			if trans_type == "position":
+				boundry_box[0] += x_trans
+				boundry_box[1] += x_trans
+				boundry_box[2] += y_trans
+				boundry_box[3] += y_trans
+				boundry_box[4] += z_trans
+				boundry_box[5] += z_trans
+			elif trans_type == "scale":
+				boundry_box[0] *= x_trans
+				boundry_box[1] *= x_trans
+				boundry_box[2] *= y_trans
+				boundry_box[3] *= y_trans
+				boundry_box[4] *= z_trans
+				boundry_box[5] *= z_trans			
+		elif trans_3d_object == sect_3d_object:
+			sect_start = sect[1]
+			sect_end = sect[2]
+			print(sect_start, "\t", sect_end)
+			for i in range(sect_end - sect_start):
+				offset_i = i+sect_start
+				if trans_type == "position":				
+					particles[offset_i].position.x += x_trans
+					particles[offset_i].position.y += y_trans
+					particles[offset_i].position.z += z_trans
+				if trans_type == "scale":					
+					particles[offset_i].position.x *= x_trans
+					particles[offset_i].position.y *= y_trans
+					particles[offset_i].position.z *= z_trans								
+
+		return boundry_box, particles		
+
 	def import_collada(self, col_file):
 		'''
 		Importing boundry box assumes box verticies are in collada file in format vertice 1-8 =
 		(0 0 0) (0 0 1) (0 1 0) (0 1 1) (1 0 0) (1 0 1) (1 1 0) (1 1 1)
+
+		<x, z, y> it appears works
 
 		Collada transforms work as follows:
 		<matrix>
@@ -104,18 +145,23 @@ class ConfigSectsIO(object):
 		</matrix> 
 		NOTE: unclear if row 4 applies translation uniformly or along individual axes.
 		Assuming individual axes for now, such as <x,y,z,s> and x moves x*s further.
+
+		TODO: rotation not implemented in transformations yet
 		'''
 		print("collada import")
 		boundry_box = [0, 100.2, 0, 66.8, 0, 668] #default
 		boundry_parts = []
-		elast_pos_section = re.compile(".*<float_array id=\"(elastic.*)positions-array\" count=\"\d+\">.*")
-		liquid_pos_section = re.compile(".*<float_array id=\"(liquid.*)positions-array\" count=\"\d+\">.*")
-		bound_pos_section = re.compile(".*<float_array id=\"(boundry.*)positions-array\" count=\"\d+\">.*")
+		elast_pos_section = re.compile(".*<float_array id=\"(elastic.*)-mesh-positions-array\" count=\"\d+\">.*")
+		liquid_pos_section = re.compile(".*<float_array id=\"(liquid.*)-mesh-positions-array\" count=\"\d+\">.*")
+		bound_pos_section = re.compile(".*<float_array id=\"(boundry.*)-mesh-positions-array\" count=\"\d+\">.*")
 		boundry_pattern = re.compile("boundry.*")
 		section_coords = []		
-		transf_section = re.compile(".*<node id=\".*\" name=\"(.*)\" type=\"NODE\">")
-		tran_matrix_sect = re.compile("<matrix sid=\"transform\">(.*)</matrix>")
-		transformations = []
+		transf_section = re.compile(".*<node id=\".*\" name=\"(.*)\" type=\"NODE\">.*")
+		tran_loc_sect = re.compile(".*<translate sid=\"location\">(.*)</translate>.*")
+		tran_scale_sect = re.compile(".*<scale sid=\"scale\">(.*)</scale>.*")
+		trans_loc = []
+		trans_scale = []
+		trans_axis_values = 4
 		elastic_found = False
 		tris_section = re.compile("\s+<p>(.*)</p>")
 		tris_triplet = re.compile("(\S+)\s(\S+)\s(\S+)\s(\S+)\s(\S+)\s(\S+)\s?")
@@ -138,14 +184,14 @@ class ConfigSectsIO(object):
 					elastic_found = True	
 
 					object_3d_name = elast_pos_section.match(line.rstrip()).group(1)
-					section_coords.append([object_3d_name, (len(particles) - len(new_particles) - 1), (len(particles) - 1)])
+					section_coords.append([object_3d_name, (len(particles) - len(new_particles)), (len(particles))])
 				elif liquid_pos_section.match(line.rstrip()):
 					p_type = 1.1
 					new_particles = self.extract_particles(p_type, line, xml_pattern, vertex_pattern)
 					particles.extend(new_particles)
 
 					object_3d_name = liquid_pos_section.match(line.rstrip()).group(1)
-					section_coords.append([object_3d_name, (len(particles) - len(new_particles) - 1), (len(particles) - 1)])
+					section_coords.append([object_3d_name, (len(particles) - len(new_particles)), (len(particles))])
 				elif bound_pos_section.match(line.rstrip()):
 					p_type = 3.1
 					new_particles = self.extract_particles(p_type, line, xml_pattern, vertex_pattern)
@@ -159,15 +205,19 @@ class ConfigSectsIO(object):
 					boundry_box = [x1, x2, y1, y2, z1, z2]			
 
 					object_3d_name = bound_pos_section.match(line.rstrip()).group(1)
-					section_coords.append([object_3d_name, (len(particles) - len(new_particles) - 1), (len(particles) - 1)])
+					section_coords.append([object_3d_name, (len(particles) - len(new_particles)), (len(particles))])
 				elif transf_section.match(line.rstrip()):
 					current_transf_name = transf_section.match(line.rstrip()).group(1)
-				elif tran_matrix_sect.match(line.rstrip()):
+				elif tran_loc_sect.match(line.rstrip()):
 					trans_entry = [current_transf_name]
-					trans_coords = tran_matrix_sect.match(line.rstrip()).group(1)
-					trans_entry.append(trans_coords.split(' '))
-					trans_entry.append(trans_entry)
-					transformations.append(trans_entry)
+					trans_coords = tran_loc_sect.match(line.rstrip()).group(1)
+					trans_entry.extend(trans_coords.split(' '))
+					trans_loc.append(trans_entry)
+				elif tran_scale_sect.match(line.rstrip()):
+					trans_entry = [current_transf_name]
+					trans_coords = tran_scale_sect.match(line.rstrip()).group(1)
+					trans_entry.extend(trans_coords.split(' '))
+					trans_scale.append(trans_entry)
 				elif tris_section.match(line.rstrip()) and elastic_found == True:
 					for tris in re.finditer(tris_triplet, tris_section.match(line.rstrip()).group(1)):
 						# create elastic connections
@@ -231,28 +281,53 @@ class ConfigSectsIO(object):
 			print(len(parm_memb_index)/float(Const.MAX_MEMBRANES_INCLUDING_SAME_PARTICLE))
 
 			# transforms	
-			for trans in transformations:
+			'''print("trans_loc")
+			print(trans_loc)
+			print("section_coords")
+			print(section_coords)'''
+			print("trans_loc")
+			print(trans_loc)
+			print("trans_scale")
+			print(trans_scale)
+
+			for trans in trans_scale:
+				for sect in section_coords:					
+					boundry_box, particles = self.translate_mesh("scale", trans, sect, boundry_pattern, boundry_box, particles)
+
+			for trans in trans_loc:
 				for sect in section_coords:
-					trans_3d_object = trans[0]
+					boundry_box, particles = self.translate_mesh("position", trans, sect, boundry_pattern, boundry_box, particles)
+
+					'''trans_3d_object = trans[0]
 					sect_3d_object = sect[0]
-					x_trans = (float(trans[0])*float(trans[3])) + (float(trans[12])*float(trans[15]))
-					y_trans = (float(trans[5])*float(trans[7])) + (float(trans[13])*float(trans[15]))
-					z_trans	= (float(trans[10])*float(trans[11])) + (float(trans[14])*float(trans[15]))				
+					x_trans = float(trans[1])
+					y_trans = float(trans[2])
+					z_trans	= float(trans[3])
 					if trans_3d_object == sect_3d_object and boundry_pattern.match(trans_3d_object):
+						print("boundry_box")
+						print(boundry_box)
+						print('x_trans')
+						print(float(trans[2]))
+						print(float(trans[4]))
+						print(x_trans)
+						print('y_trans')	
+						print(y_trans)
 						boundry_box[0] += x_trans
 						boundry_box[1] += x_trans
 						boundry_box[2] += y_trans
 						boundry_box[3] += y_trans
 						boundry_box[4] += z_trans
 						boundry_box[5] += z_trans
+						print("boundry_box")
+						print(boundry_box)						
 					elif trans_3d_object == sect_3d_object:
 						sect_start = sect[1]
 						sect_end = sect[2]
-						for i in range(sect_end-sect_start+1):
+						for i in range(sect_end - sect_start):
 							offset_i = i+sect_start
 							particles[offset_i].position.x += x_trans
 							particles[offset_i].position.y += y_trans
-							particles[offset_i].position.z += z_trans
+							particles[offset_i].position.z += z_trans'''
 
 		return boundry_box, particles, elastic_connections_collection, membranes, parm_memb_index
 
