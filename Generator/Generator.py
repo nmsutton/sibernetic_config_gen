@@ -366,10 +366,11 @@ class Generator(object):
         '''        
         nMi = elasticParticles.index(particle)*self.nMuscles/len(elasticParticles);
         neighbour_collection = []
+        part_phys_mod = 0.0
         for p_i in range(len(elasticParticles)):
             p = elasticParticles[p_i]
             #if Particle.dot_particles(particle, p) <= (part_phys_mod[p_i]*part_phys_mod[p_i]) * 3.05 and p != particle:
-            if Particle.dot_particles(particle, p) <= 1 * 3.05 and p != particle:
+            if Particle.dot_particles(particle, p) <= part_phys_mod * 3.05 and p != particle:
                 neighbour_collection.append(p)
         #neighbour_collection = [p for p in elasticParticles if Particle.dot_particles(particle, p) <= mod_squared_r0 * 3.05 and p != particle ]
         neighbour_collection.sort(key=lambda p: Particle.distBetween_particles(particle, p))

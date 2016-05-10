@@ -40,6 +40,9 @@ from Particle import Particle, Float4
 from Const import Const
 from ElasticConnection import ElasticConnection
 import re
+import math as math
+#import numpy as np
+#import collada
 
 class ConfigSectsIO(object):
 	def import_conf(self, in_file):
@@ -87,6 +90,9 @@ class ConfigSectsIO(object):
 				particle = Particle(float(p_x),float(p_y),float(p_z),float(p_type))
 				particle.setVelocity(Float4(0.0,0.0,0.0,float(p_type)))
 				particles.append(particle)		
+		#print('found particles')
+		#print(particles)
+
 
 		return particles
 
@@ -125,7 +131,28 @@ class ConfigSectsIO(object):
 				if trans_type == "scale":					
 					particles[offset_i].position.x *= x_trans
 					particles[offset_i].position.y *= y_trans
-					particles[offset_i].position.z *= z_trans								
+					particles[offset_i].position.z *= z_trans			
+
+		'''# precalculate Sin - Cos
+		angx = 0; angy = 0; angz = 0
+		cx = math.cos(angx); sx = math.sin(angx) 
+		cy = math.cos(angy); sy = math.sin(angy) 
+		cz = math.cos(angz); sz = math.sin(angz) 
+
+		# rotate x-axis
+		x1=x
+		y1=(cx*y)+(sx*z)
+		z1=(sx*z)-(cx*y)
+
+		# rotate y-axis
+		x2=(cy*x1)+(sy*z1)
+		y2=y1
+		z2=(sy*z1)-(cy*x1)
+
+		# rotate z-axis
+		x1=(cz*x2)+(sz*y2)
+		y1=(cz*y2)+(sz*x2)
+		z1=z2					'''
 
 		return boundry_box, particles		
 
@@ -149,6 +176,7 @@ class ConfigSectsIO(object):
 		TODO: rotation not implemented in transformations yet
 		'''
 		print("collada import")
+		#meshes = Collada(col_file)
 		boundry_box = [0, 100.2, 0, 66.8, 0, 668] #default
 		boundry_parts = []
 		elast_pos_section = re.compile(".*<float_array id=\"(elastic.*)-mesh-positions-array\" count=\"\d+\">.*")
@@ -178,6 +206,7 @@ class ConfigSectsIO(object):
 		with open(col_file, "r") as ins:
 			for line in ins:
 				if elast_pos_section.match(line.rstrip()):
+					print("###########")
 					p_type = 2.1
 					new_particles = self.extract_particles(p_type, line, xml_pattern, vertex_pattern)
 					particles.extend(new_particles)
@@ -196,12 +225,13 @@ class ConfigSectsIO(object):
 					p_type = 3.1
 					new_particles = self.extract_particles(p_type, line, xml_pattern, vertex_pattern)
 					boundry_parts.extend(new_particles)
-					x1 = boundry_parts[0].position.x
-					x2 = boundry_parts[4].position.x
-					y1 = boundry_parts[0].position.y
-					y2 = boundry_parts[2].position.y
-					z1 = boundry_parts[0].position.z
-					z2 = boundry_parts[1].position.z		
+					x_b, y_b, z_b = [], [], []
+					for i in range(len(boundry_parts)):
+						x_b.append(boundry_parts[i].position.x)
+						y_b.append(boundry_parts[i].position.y)
+						z_b.append(boundry_parts[i].position.z)
+					x_b.sort(); y_b.sort(); z_b.sort(); 
+					x1, x2, y1, y2, z1, z2 = x_b[0], x_b[-1], y_b[0], y_b[-1], z_b[0], z_b[-1]
 					boundry_box = [x1, x2, y1, y2, z1, z2]			
 
 					object_3d_name = bound_pos_section.match(line.rstrip()).group(1)
@@ -253,7 +283,8 @@ class ConfigSectsIO(object):
 										dy2 *= dy2
 										dz2 *= dz2 
 										nMi = particles.index(part_i)*nMuscles/len(particles);
-										val1 = (1.1+nMi)*float((dz2 > 100*dx2)and(dz2 > 100*dy2))  
+										val1 = (1.1+nMi)*float((dz2 > 100*dx2)and(dz2 > 100*dy2)) 
+										#val1 = 0.0 
 
 										elastic_connections_collection.append( ElasticConnection(particles.index(part_j),Particle.distBetween_particles(part_j,part_i), val1, 0) )
 										found_j.append(j_index)
@@ -298,36 +329,40 @@ class ConfigSectsIO(object):
 				for sect in section_coords:
 					boundry_box, particles = self.translate_mesh("position", trans, sect, boundry_pattern, boundry_box, particles)
 
-					'''trans_3d_object = trans[0]
-					sect_3d_object = sect[0]
-					x_trans = float(trans[1])
-					y_trans = float(trans[2])
-					z_trans	= float(trans[3])
-					if trans_3d_object == sect_3d_object and boundry_pattern.match(trans_3d_object):
-						print("boundry_box")
-						print(boundry_box)
-						print('x_trans')
-						print(float(trans[2]))
-						print(float(trans[4]))
-						print(x_trans)
-						print('y_trans')	
-						print(y_trans)
-						boundry_box[0] += x_trans
-						boundry_box[1] += x_trans
-						boundry_box[2] += y_trans
-						boundry_box[3] += y_trans
-						boundry_box[4] += z_trans
-						boundry_box[5] += z_trans
-						print("boundry_box")
-						print(boundry_box)						
-					elif trans_3d_object == sect_3d_object:
-						sect_start = sect[1]
-						sect_end = sect[2]
-						for i in range(sect_end - sect_start):
-							offset_i = i+sect_start
-							particles[offset_i].position.x += x_trans
-							particles[offset_i].position.y += y_trans
-							particles[offset_i].position.z += z_trans'''
+			'''trans_3d_object = trans[0]
+			sect_3d_object = sect[0]
+			x_trans = float(trans[1])
+			y_trans = float(trans[2])
+			z_trans	= float(trans[3])
+			if trans_3d_object == sect_3d_object and boundry_pattern.match(trans_3d_object):
+				print("boundry_box")
+				print(boundry_box)
+				print('x_trans')
+				print(float(trans[2]))
+				print(float(trans[4]))
+				print(x_trans)
+				print('y_trans')	
+				print(y_trans)
+				boundry_box[0] += x_trans
+				boundry_box[1] += x_trans
+				boundry_box[2] += y_trans
+				boundry_box[3] += y_trans
+				boundry_box[4] += z_trans
+				boundry_box[5] += z_trans
+				print("boundry_box")
+				print(boundry_box)						
+			elif trans_3d_object == sect_3d_object:
+				sect_start = sect[1]
+				sect_end = sect[2]
+				for i in range(sect_end - sect_start):
+					offset_i = i+sect_start
+					particles[offset_i].position.x += x_trans
+					particles[offset_i].position.y += y_trans
+					particles[offset_i].position.z += z_trans'''
+
+			#membranes = []
+			#parm_memb_index = []
+			#elastic_connections_collection = []
 
 		return boundry_box, particles, elastic_connections_collection, membranes, parm_memb_index
 
