@@ -156,6 +156,19 @@ class ConfigSectsIO(object):
 
 		return boundry_box, particles		
 
+	def calc_part_val1(self, particles, part_i, part_j, nMuscles):
+		val1 = 0
+		dx2 = part_i.position.x - part_j.position.x
+		dy2 = part_i.position.y - part_j.position.y
+		dz2 = part_i.position.z - part_j.position.z
+		dx2 *= dx2
+		dy2 *= dy2
+		dz2 *= dz2 
+		nMi = particles.index(part_i)*nMuscles/len(particles);
+		val1 = (1.1+nMi)*float((dz2 > 100*dx2)and(dz2 > 100*dy2)) 
+
+		return val1
+
 	def import_collada(self, col_file):
 		'''
 		Importing boundry box assumes box verticies are in collada file in format vertice 1-8 =
@@ -225,12 +238,14 @@ class ConfigSectsIO(object):
 					p_type = 3.1
 					new_particles = self.extract_particles(p_type, line, xml_pattern, vertex_pattern)
 					boundry_parts.extend(new_particles)
+
 					x_b, y_b, z_b = [], [], []
 					for i in range(len(boundry_parts)):
 						x_b.append(boundry_parts[i].position.x)
 						y_b.append(boundry_parts[i].position.y)
 						z_b.append(boundry_parts[i].position.z)
-					x_b.sort(); y_b.sort(); z_b.sort(); 
+					x_b.sort(); y_b.sort(); z_b.sort()
+
 					x1, x2, y1, y2, z1, z2 = x_b[0], x_b[-1], y_b[0], y_b[-1], z_b[0], z_b[-1]
 					boundry_box = [x1, x2, y1, y2, z1, z2]			
 
@@ -249,22 +264,56 @@ class ConfigSectsIO(object):
 					trans_entry.extend(trans_coords.split(' '))
 					trans_scale.append(trans_entry)
 				elif tris_section.match(line.rstrip()) and elastic_found == True:
+					#print("tris", " ", object_3d_name, section_coords[-1])
+					start_p_i = section_coords[-1][1]
+					end_p_i = section_coords[-1][2]
+					p_index_offset = start_p_i
+					conn_created = [0]*len(particles)
+
+					#elastic_connections_collection.extend([ElasticConnection(Const.NO_PARTICEL_ID,0,0,0)] * (Const.MAX_NUM_OF_NEIGHBOUR * len(particles)))
+					'''for i in range(end_p_i-start_p_i):
+						conn_created.append([p_index_offset, 0])'''
+					print("p_index_offset ", p_index_offset)
 					for tris in re.finditer(tris_triplet, tris_section.match(line.rstrip()).group(1)):
 						# create elastic connections
-						particle_i_group = [ int(tris.group(1)), int(tris.group(1)), int(tris.group(3)) ]
-						particle_j_group = [ int(tris.group(3)), int(tris.group(5)), int(tris.group(5)) ]
+						p1 = p_index_offset + int(tris.group(1))
+						p3 = p_index_offset + int(tris.group(3))
+						p5 = p_index_offset + int(tris.group(5))
+						particle_i_group = [ p1, p1, p3 ]
+						particle_j_group = [ p3, p5, p5 ]
 						val1 = 0.0
-						for p_index in range(len(particle_j_group)):
+						'''for p_index in range(len(particle_j_group)):
 							part_i = particles[particle_i_group[p_index]]
 							part_j = particles[particle_j_group[p_index]]
-							unsorted_connections.append([[int(tris.group(1)),int(tris.group(3))],[int(tris.group(1)),int(tris.group(5))],[int(tris.group(3)),int(tris.group(5))]])
+							unsorted_connections.append([[p1,p3],[p1,p5],[p3,p5]])'''
+						'''for p_index in range(len(particle_j_group)):
+							part_i = particles[particle_i_group[p_index]]
+							part_j = particles[particle_j_group[p_index]]
+							part_i_index = particle_i_group[p_index]
+							if (conn_created[part_i_index] < Const.MAX_NUM_OF_NEIGHBOUR):
+								existing_conn = False
+								for existing_conn_i in range(Const.MAX_NUM_OF_NEIGHBOUR):
+									existing_i = ((part_i_index-p_index_offset)*Const.MAX_NUM_OF_NEIGHBOUR) + existing_conn_i
+									#print("particles.index(part_j)", particles.index(part_j))
+									#print(elastic_connections_collection[existing_i].particle_j)
+									if (particles.index(part_j)+0.1) == elastic_connections_collection[existing_i].particle_j:
+										existing_conn = True
+								if existing_conn == False:
+									val1 = self.calc_part_val1(particles, part_i, part_j, nMuscles)
+
+									ec_i = ((part_i_index-p_index_offset)*Const.MAX_NUM_OF_NEIGHBOUR) + conn_created[part_i_index]
+									elastic_connections_collection[ec_i] = ElasticConnection(particles.index(part_j),Particle.distBetween_particles(part_j,part_i), val1, 0)
+									conn_created[part_i_index] += 1'''
+								
+						unsorted_connections.append([[p1,p3],[p1,p5],[p3,p5]])
 
 						# create membranes
-						membrane_triple = [int(tris.group(1)), int(tris.group(3)), int(tris.group(5))]
+						membrane_triple = [p1, p3, p5]
 						if not membrane_triple in membranes:
 							membranes.append(membrane_triple)
 						# add blanks
-					for p_i in range(len(particles)):
+					for orig_p_i in range(len(particles)-p_index_offset):
+						p_i = orig_p_i# + p_index_offset
 						total_conn = 0
 						#val1 = 1.0
 						found_j = []
@@ -289,7 +338,12 @@ class ConfigSectsIO(object):
 										elastic_connections_collection.append( ElasticConnection(particles.index(part_j),Particle.distBetween_particles(part_j,part_i), val1, 0) )
 										found_j.append(j_index)
 										total_conn += 1
-						elastic_connections_collection.extend([ElasticConnection(Const.NO_PARTICEL_ID,0,0,0)] * (Const.MAX_NUM_OF_NEIGHBOUR - total_conn))#len(particle_i_group)) )
+						elastic_connections_collection.extend([ElasticConnection(Const.NO_PARTICEL_ID,0,0,0)] * (Const.MAX_NUM_OF_NEIGHBOUR - total_conn))#len(particle_i_group)) )'''						
+					'''for orig_p_i in range(len(particles)-p_index_offset):
+						p_i = orig_p_i + p_index_offset
+						conn_remaining = Const.MAX_NUM_OF_NEIGHBOUR - conn_created[particles.index(p_i)]
+						for c_i in range(conn_remaining)
+						elastic_connections_collection.extend([ElasticConnection(Const.NO_PARTICEL_ID,0,0,0)] * (Const.MAX_NUM_OF_NEIGHBOUR - total_conn))#len(particle_i_group)) )'''
 					elastic_found = False
 
 			# create pmis
