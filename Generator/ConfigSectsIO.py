@@ -296,17 +296,19 @@ class ConfigSectsIO(object):
 			print("particles:")
 			print(float(len(particles)))
 			for p_i in range(len(particles)):
-				pmi_group = []
-				for m_i in range(len(membranes)):
-					for memb_vert in membranes[m_i]:
-						if p_i == memb_vert and len(pmi_group) < Const.MAX_MEMBRANES_INCLUDING_SAME_PARTICLE:
-							pmi_group.append(m_i)
+				#print(particles[p_i].type)
+				if particles[p_i].type == 2.1:
+					pmi_group = []
+					for m_i in range(len(membranes)):
+						for memb_vert in membranes[m_i]:
+							if p_i == memb_vert and len(pmi_group) < Const.MAX_MEMBRANES_INCLUDING_SAME_PARTICLE:
+								pmi_group.append(m_i)
 
-				for pmi_i in pmi_group:
-					parm_memb_index.append(pmi_i)
+					for pmi_i in pmi_group:
+						parm_memb_index.append(pmi_i)
 
-				for blank_i in range(Const.MAX_MEMBRANES_INCLUDING_SAME_PARTICLE - len(pmi_group)):
-					parm_memb_index.append(-1)
+					for blank_i in range(Const.MAX_MEMBRANES_INCLUDING_SAME_PARTICLE - len(pmi_group)):
+						parm_memb_index.append(-1)
 
 			print("parm_memb_index:")
 			print(len(parm_memb_index)/float(Const.MAX_MEMBRANES_INCLUDING_SAME_PARTICLE))
