@@ -209,6 +209,8 @@ class ConfigSectsIO(object):
 		xml_pattern = "(.*[>])+(.*)([<].*)+"
 		vertex_pattern = "(\S+)\s(\S+)\s(\S+)(\s?)"
 		current_transf_name = ""
+		elastic_particles = []
+		liquid_particles = []
 		particles = []
 		unsorted_connections = []
 		membranes = []
@@ -222,6 +224,7 @@ class ConfigSectsIO(object):
 					print("###########")
 					p_type = 2.1
 					new_particles = self.extract_particles(p_type, line, xml_pattern, vertex_pattern)
+					#elastic_particles.extend(new_particles)
 					particles.extend(new_particles)
 					elastic_found = True	
 
@@ -230,6 +233,7 @@ class ConfigSectsIO(object):
 				elif liquid_pos_section.match(line.rstrip()):
 					p_type = 1.1
 					new_particles = self.extract_particles(p_type, line, xml_pattern, vertex_pattern)
+					#liquid_particles.extend(new_particles)
 					particles.extend(new_particles)
 
 					object_3d_name = liquid_pos_section.match(line.rstrip()).group(1)
@@ -264,13 +268,16 @@ class ConfigSectsIO(object):
 					trans_entry.extend(trans_coords.split(' '))
 					trans_scale.append(trans_entry)
 				elif tris_section.match(line.rstrip()) and elastic_found == True:
-					#print("tris", " ", object_3d_name, section_coords[-1])
+					#particles.extend(elastic_particles)
+					#particles.extend(liquid_particles)
 					start_p_i = section_coords[-1][1]
 					end_p_i = section_coords[-1][2]
 					p_index_offset = start_p_i
-					conn_created = [0]*len(particles)
+					#conn_created = [0]*len(particles)
 
 					#elastic_connections_collection.extend([ElasticConnection(Const.NO_PARTICEL_ID,0,0,0)] * (Const.MAX_NUM_OF_NEIGHBOUR * len(particles)))
+					# fill in prior particle connections
+					#elastic_connections_collection.extend([ElasticConnection(Const.NO_PARTICEL_ID,0,0,0)] * (Const.MAX_NUM_OF_NEIGHBOUR * (start_p_i - 1)))
 					'''for i in range(end_p_i-start_p_i):
 						conn_created.append([p_index_offset, 0])'''
 					print("p_index_offset ", p_index_offset)
@@ -279,9 +286,12 @@ class ConfigSectsIO(object):
 						p1 = p_index_offset + int(tris.group(1))
 						p3 = p_index_offset + int(tris.group(3))
 						p5 = p_index_offset + int(tris.group(5))
-						particle_i_group = [ p1, p1, p3 ]
+						'''p1 = int(tris.group(1))
+						p3 = int(tris.group(3))
+						p5 = int(tris.group(5))	'''
+						'''particle_i_group = [ p1, p1, p3 ]
 						particle_j_group = [ p3, p5, p5 ]
-						val1 = 0.0
+						val1 = 0.0'''
 						'''for p_index in range(len(particle_j_group)):
 							part_i = particles[particle_i_group[p_index]]
 							part_j = particles[particle_j_group[p_index]]
@@ -312,16 +322,22 @@ class ConfigSectsIO(object):
 						if not membrane_triple in membranes:
 							membranes.append(membrane_triple)
 						# add blanks
-					for orig_p_i in range(len(particles)-p_index_offset):
+					#for orig_p_i in range(len(particles)-p_index_offset):
+					#print("unsorted_connections ",len(unsorted_connections))
+					for orig_p_i in range(len(particles)):#[start_p_i:end_p_i]:
+						print("particles ",len(particles))
 						p_i = orig_p_i# + p_index_offset
 						total_conn = 0
 						#val1 = 1.0
 						found_j = []
 						for con_i in range(len(unsorted_connections)):
 							for connection in unsorted_connections[con_i]:
-								if (p_i == connection[0] or p_i == connection[1]) and (total_conn < Const.MAX_NUM_OF_NEIGHBOUR):
+								conn_1 = connection[0]# + p_index_offset
+								conn_2 = connection[1]# + p_index_offset
+								if (p_i == conn_1 or p_i == conn_2) and (total_conn < Const.MAX_NUM_OF_NEIGHBOUR):# and p_i < 482:
 									part_i = particles[p_i]
-									j_index = (p_i == connection[0]) and connection[1] or connection[0]
+									j_index = (p_i == conn_1) and conn_2 or conn_1
+									#print(j_index)
 									part_j = particles[j_index]
 									if not j_index in found_j:
 										val1 = 0
@@ -331,9 +347,9 @@ class ConfigSectsIO(object):
 										dx2 *= dx2
 										dy2 *= dy2
 										dz2 *= dz2 
-										nMi = particles.index(part_i)*nMuscles/len(particles);
+										nMi = particles.index(part_i)*nMuscles/len(particles[start_p_i:end_p_i]);
 										val1 = (1.1+nMi)*float((dz2 > 100*dx2)and(dz2 > 100*dy2)) 
-										#val1 = 0.0 
+										val1 = 0.0
 
 										elastic_connections_collection.append( ElasticConnection(particles.index(part_j),Particle.distBetween_particles(part_j,part_i), val1, 0) )
 										found_j.append(j_index)
