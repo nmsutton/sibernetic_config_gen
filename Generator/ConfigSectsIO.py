@@ -96,42 +96,65 @@ class ConfigSectsIO(object):
 
 		return particles
 
-	def translate_mesh(self, trans_type, trans, sect, boundry_pattern, boundry_box, particles):
-		trans_3d_object = trans[0]
-		sect_3d_object = sect[0]
-		x_trans = float(trans[1])
-		y_trans = float(trans[2])
-		z_trans	= float(trans[3])
-		print (trans_3d_object, " ", sect_3d_object)
-		if trans_3d_object == sect_3d_object and boundry_pattern.match(trans_3d_object):
-			if trans_type == "position":
-				boundry_box[0] += x_trans
-				boundry_box[1] += x_trans
-				boundry_box[2] += y_trans
-				boundry_box[3] += y_trans
-				boundry_box[4] += z_trans
-				boundry_box[5] += z_trans
-			elif trans_type == "scale":
-				boundry_box[0] *= x_trans
-				boundry_box[1] *= x_trans
-				boundry_box[2] *= y_trans
-				boundry_box[3] *= y_trans
-				boundry_box[4] *= z_trans
-				boundry_box[5] *= z_trans			
-		elif trans_3d_object == sect_3d_object:
-			sect_start = sect[1]
-			sect_end = sect[2]
-			print(sect_start, "\t", sect_end)
-			for i in range(sect_end - sect_start):
-				offset_i = i+sect_start
-				if trans_type == "position":				
-					particles[offset_i].position.x += x_trans
-					particles[offset_i].position.y += y_trans
-					particles[offset_i].position.z += z_trans
-				if trans_type == "scale":					
-					particles[offset_i].position.x *= x_trans
-					particles[offset_i].position.y *= y_trans
-					particles[offset_i].position.z *= z_trans			
+	def translate_mesh(self, trans_scale, trans_loc, section_coords, sect_patterns, boundry_box, particles):
+		elastic_pattern = sect_patterns[0]
+		liquid_pattern = sect_patterns[1]
+		boundry_pattern = sect_patterns[2]
+		offset_counter = 0
+		elastic_offset = 0
+		for sect in section_coords:
+			sect_3d_object = sect[0]
+			if elastic_pattern.match(sect_3d_object): elastic_offset = sect[2]
+
+		for t_i in range(len(trans_scale)):
+			trans_3d_object = trans_loc[t_i][0]
+			x_p_trans = float(trans_loc[t_i][1])
+			y_p_trans = float(trans_loc[t_i][2])
+			z_p_trans	= float(trans_loc[t_i][3])
+			x_s_trans = float(trans_scale[t_i][1])
+			y_s_trans = float(trans_scale[t_i][2])
+			z_s_trans	= float(trans_scale[t_i][3])			
+
+			if boundry_pattern.match(trans_3d_object):
+				#scale
+				boundry_box[0] *= x_s_trans
+				boundry_box[1] *= x_s_trans
+				boundry_box[2] *= y_s_trans
+				boundry_box[3] *= y_s_trans
+				boundry_box[4] *= z_s_trans
+				boundry_box[5] *= z_s_trans						
+				#position
+				boundry_box[0] += x_p_trans
+				boundry_box[1] += x_p_trans
+				boundry_box[2] += y_p_trans
+				boundry_box[3] += y_p_trans
+				boundry_box[4] += z_p_trans
+				boundry_box[5] += z_p_trans
+
+			print("~~boundry_box~~", boundry_box)
+
+			for sect in section_coords:
+				sect_3d_object = sect[0]
+				print (sect_3d_object, " ", sect_3d_object)					
+				if trans_3d_object == sect_3d_object:
+					if liquid_pattern.match(trans_3d_object):
+						sect_start = sect[1] + elastic_offset + offset_counter
+						sect_end = sect[2] + elastic_offset + offset_counter - 1
+						offset_counter += sect[2]
+					else:
+						sect_start = sect[1]
+						sect_end = sect[2] - 1
+					print(sect_start, "\t", sect_end)
+					for i in range(sect_end - sect_start):
+						offset_i = i+sect_start
+						#scale
+						particles[offset_i].position.x *= x_s_trans
+						particles[offset_i].position.y *= y_s_trans
+						particles[offset_i].position.z *= z_s_trans
+						#position
+						particles[offset_i].position.x += x_p_trans
+						particles[offset_i].position.y += y_p_trans
+						particles[offset_i].position.z += z_p_trans						
 
 		'''# precalculate Sin - Cos
 		angx = 0; angy = 0; angz = 0
@@ -195,7 +218,10 @@ class ConfigSectsIO(object):
 		elast_pos_section = re.compile(".*<float_array id=\"(elastic.*)-mesh-positions-array\" count=\"\d+\">.*")
 		liquid_pos_section = re.compile(".*<float_array id=\"(liquid.*)-mesh-positions-array\" count=\"\d+\">.*")
 		bound_pos_section = re.compile(".*<float_array id=\"(boundry.*)-mesh-positions-array\" count=\"\d+\">.*")
+		elastic_pattern = re.compile("elastic.*") 
+		liquid_pattern = re.compile("liquid.*")
 		boundry_pattern = re.compile("boundry.*")
+		sect_patterns = [elastic_pattern, liquid_pattern, boundry_pattern]
 		section_coords = []		
 		transf_section = re.compile(".*<node id=\".*\" name=\"(.*)\" type=\"NODE\">.*")
 		tran_loc_sect = re.compile(".*<translate sid=\"location\">(.*)</translate>.*")
@@ -224,20 +250,20 @@ class ConfigSectsIO(object):
 					print("###########")
 					p_type = 2.1
 					new_particles = self.extract_particles(p_type, line, xml_pattern, vertex_pattern)
-					#elastic_particles.extend(new_particles)
-					particles.extend(new_particles)
+					elastic_particles.extend(new_particles)
+					#particles.extend(new_particles)
 					elastic_found = True	
 
 					object_3d_name = elast_pos_section.match(line.rstrip()).group(1)
-					section_coords.append([object_3d_name, (len(particles) - len(new_particles)), (len(particles))])
+					section_coords.append([object_3d_name, 0, len(new_particles)])
 				elif liquid_pos_section.match(line.rstrip()):
 					p_type = 1.1
 					new_particles = self.extract_particles(p_type, line, xml_pattern, vertex_pattern)
-					#liquid_particles.extend(new_particles)
-					particles.extend(new_particles)
+					liquid_particles.extend(new_particles)
+					#particles.extend(new_particles)
 
 					object_3d_name = liquid_pos_section.match(line.rstrip()).group(1)
-					section_coords.append([object_3d_name, (len(particles) - len(new_particles)), (len(particles))])
+					section_coords.append([object_3d_name, 0, len(new_particles)])
 				elif bound_pos_section.match(line.rstrip()):
 					p_type = 3.1
 					new_particles = self.extract_particles(p_type, line, xml_pattern, vertex_pattern)
@@ -254,7 +280,7 @@ class ConfigSectsIO(object):
 					boundry_box = [x1, x2, y1, y2, z1, z2]			
 
 					object_3d_name = bound_pos_section.match(line.rstrip()).group(1)
-					section_coords.append([object_3d_name, (len(particles) - len(new_particles)), (len(particles))])
+					#section_coords.append([object_3d_name, 0, len(new_particles)])
 				elif transf_section.match(line.rstrip()):
 					current_transf_name = transf_section.match(line.rstrip()).group(1)
 				elif tran_loc_sect.match(line.rstrip()):
@@ -268,8 +294,8 @@ class ConfigSectsIO(object):
 					trans_entry.extend(trans_coords.split(' '))
 					trans_scale.append(trans_entry)
 				elif tris_section.match(line.rstrip()) and elastic_found == True:
-					#particles.extend(elastic_particles)
-					#particles.extend(liquid_particles)
+					particles.extend(elastic_particles)
+					particles.extend(liquid_particles)
 					start_p_i = section_coords[-1][1]
 					end_p_i = section_coords[-1][2]
 					p_index_offset = start_p_i
@@ -283,9 +309,9 @@ class ConfigSectsIO(object):
 					print("p_index_offset ", p_index_offset)
 					for tris in re.finditer(tris_triplet, tris_section.match(line.rstrip()).group(1)):
 						# create elastic connections
-						p1 = p_index_offset + int(tris.group(1))
-						p3 = p_index_offset + int(tris.group(3))
-						p5 = p_index_offset + int(tris.group(5))
+						p1 = int(tris.group(1))#p_index_offset + int(tris.group(1))
+						p3 = int(tris.group(3))#p_index_offset + int(tris.group(3))
+						p5 = int(tris.group(5))#p_index_offset + int(tris.group(5))
 						'''p1 = int(tris.group(1))
 						p3 = int(tris.group(3))
 						p5 = int(tris.group(5))	'''
@@ -325,7 +351,7 @@ class ConfigSectsIO(object):
 					#for orig_p_i in range(len(particles)-p_index_offset):
 					#print("unsorted_connections ",len(unsorted_connections))
 					for orig_p_i in range(len(particles)):#[start_p_i:end_p_i]:
-						print("particles ",len(particles))
+						#print("particles ",len(particles))
 						p_i = orig_p_i# + p_index_offset
 						total_conn = 0
 						#val1 = 1.0
@@ -349,7 +375,7 @@ class ConfigSectsIO(object):
 										dz2 *= dz2 
 										nMi = particles.index(part_i)*nMuscles/len(particles[start_p_i:end_p_i]);
 										val1 = (1.1+nMi)*float((dz2 > 100*dx2)and(dz2 > 100*dy2)) 
-										val1 = 0.0
+										#val1 = 0.0
 
 										elastic_connections_collection.append( ElasticConnection(particles.index(part_j),Particle.distBetween_particles(part_j,part_i), val1, 0) )
 										found_j.append(j_index)
@@ -393,13 +419,13 @@ class ConfigSectsIO(object):
 			print("trans_scale")
 			print(trans_scale)
 
-			for trans in trans_scale:
-				for sect in section_coords:					
-					boundry_box, particles = self.translate_mesh("scale", trans, sect, boundry_pattern, boundry_box, particles)
+			'''for trans in trans_scale:
+				boundry_box, particles = self.translate_mesh("scale", trans, section_coords, boundry_pattern, liquid_pattern, boundry_box, particles)
 
 			for trans in trans_loc:
-				for sect in section_coords:
-					boundry_box, particles = self.translate_mesh("position", trans, sect, boundry_pattern, boundry_box, particles)
+				boundry_box, particles = self.translate_mesh("position", trans, section_coords, boundry_pattern, liquid_pattern, boundry_box, particles)'''
+
+			boundry_box, particles = self.translate_mesh(trans_scale, trans_loc, section_coords, sect_patterns, boundry_box, particles)
 
 			'''trans_3d_object = trans[0]
 			sect_3d_object = sect[0]
