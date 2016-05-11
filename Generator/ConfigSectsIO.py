@@ -139,11 +139,11 @@ class ConfigSectsIO(object):
 				if trans_3d_object == sect_3d_object:
 					if liquid_pattern.match(trans_3d_object):
 						sect_start = sect[1] + elastic_offset + offset_counter
-						sect_end = sect[2] + elastic_offset + offset_counter - 1
+						sect_end = sect[2] + elastic_offset + offset_counter
 						offset_counter += sect[2]
 					else:
 						sect_start = sect[1]
-						sect_end = sect[2] - 1
+						sect_end = sect[2]
 					print(sect_start, "\t", sect_end)
 					for i in range(sect_end - sect_start):
 						offset_i = i+sect_start
