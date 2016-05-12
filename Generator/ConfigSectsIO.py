@@ -134,9 +134,11 @@ class ConfigSectsIO(object):
 			print("~~boundry_box~~", boundry_box)
 
 			for sect in section_coords:
-				sect_3d_object = sect[0]
-				print (sect_3d_object, " ", sect_3d_object)					
+				sect_3d_object = sect[0]		
+				print (trans_3d_object, " ", sect_3d_object)			
 				if trans_3d_object == sect_3d_object:
+					print ("section_coords", " ", section_coords)
+					print("p size ",len(particles))	
 					if liquid_pattern.match(trans_3d_object):
 						sect_start = sect[1] + elastic_offset + offset_counter
 						sect_end = sect[2] + elastic_offset + offset_counter
@@ -191,6 +193,61 @@ class ConfigSectsIO(object):
 		val1 = (1.1+nMi)*float((dz2 > 100*dx2)and(dz2 > 100*dy2)) 
 
 		return val1
+
+	def sort_conns(self, new_conns):
+		for i in range(len(new_conns)):
+			for i2 in range(len(new_conns)):
+				if (new_conns[i].r_ij<new_conns[i2].r_ij):
+					temp_conn = new_conns[i]					
+					new_conns[i] = new_conns[i2]
+					new_conns[i2] = temp_conn
+
+		return new_conns
+
+	def export_faces(self, out_file, membranes):
+		output_f = open(out_file,"w")
+
+		print("mem range ", len(membranes))
+		for face_i in range(len(membranes)):
+			p1 = (float(membranes[face_i][0]))
+			p2 = (float(face_i))
+			p3 = (float(membranes[face_i][1]))
+			p4 = (float(face_i))
+			p5 = (float(membranes[face_i][2]))
+			p6 = (float(face_i))
+			#p_type = "{0:.2g}".format(float(p_t))
+			output_f.write(str(p1)+" "+str(p2)+" "+str(p3)+" "+str(p4)+" "+str(p5)+" "+str(p6)+" ")
+			#output_f.write("\n")
+
+		output_f.close()
+
+	def export_faces2(self):
+		'''in_file = '/CompNeuro/Software/openworm/general/current_3d/faces3.txt'
+		out_file = './configurations/faces4.txt'
+		#input_f = open(in_file, "r")
+		output_f = open(out_file,"w")
+		memb_pattern = "(\S+)\s(\S+)\s(\S+)(\s)(\S+)"
+		line_counter = 0
+
+		with open(in_file, "r") as ins:
+			for line in ins:
+				for  in re.finditer(memb_pattern, line.rstrip()):
+				line_counter++
+
+		print("mem range ", len(membranes))
+		for face_i in range(len(membranes)):
+			p1 = (float(membranes[face_i][0]))
+			p2 = (float(face_i))
+			p3 = (float(membranes[face_i][1]))
+			p4 = (float(face_i))
+			p5 = (float(membranes[face_i][2]))
+			p6 = (float(face_i))
+			#p_type = "{0:.2g}".format(float(p_t))
+			output_f.write(str(p1)+" "+str(p2)+" "+str(p3)+" "+str(p4)+" "+str(p5)+" "+str(p6)+" ")
+			#output_f.write("\n")
+
+		output_f.close()		'''
+		return 0
 
 	def import_collada(self, col_file):
 		'''
@@ -260,6 +317,7 @@ class ConfigSectsIO(object):
 					p_type = 1.1
 					new_particles = self.extract_particles(p_type, line, xml_pattern, vertex_pattern)
 					liquid_particles.extend(new_particles)
+					print("+-=-+liquid found+-=-+ ",len(liquid_particles))
 					#particles.extend(new_particles)
 
 					object_3d_name = liquid_pos_section.match(line.rstrip()).group(1)
@@ -295,7 +353,6 @@ class ConfigSectsIO(object):
 					trans_scale.append(trans_entry)
 				elif tris_section.match(line.rstrip()) and elastic_found == True:
 					particles.extend(elastic_particles)
-					particles.extend(liquid_particles)
 					start_p_i = section_coords[-1][1]
 					end_p_i = section_coords[-1][2]
 					p_index_offset = start_p_i
@@ -356,6 +413,7 @@ class ConfigSectsIO(object):
 						total_conn = 0
 						#val1 = 1.0
 						found_j = []
+						new_conns = []
 						for con_i in range(len(unsorted_connections)):
 							for connection in unsorted_connections[con_i]:
 								conn_1 = connection[0]# + p_index_offset
@@ -375,11 +433,17 @@ class ConfigSectsIO(object):
 										dz2 *= dz2 
 										nMi = particles.index(part_i)*nMuscles/len(particles[start_p_i:end_p_i]);
 										val1 = (1.1+nMi)*float((dz2 > 100*dx2)and(dz2 > 100*dy2)) 
-										#val1 = 0.0
+										val1 = 1.1
+										dist_mult = 2000.0#500.0#2000.0
+										dist = Particle.distBetween_particles(part_j,part_i) * dist_mult
 
-										elastic_connections_collection.append( ElasticConnection(particles.index(part_j),Particle.distBetween_particles(part_j,part_i), val1, 0) )
+										#elastic_connections_collection.append( ElasticConnection(particles.index(part_j), dist, val1, 0) )
+										new_conns.append( ElasticConnection(particles.index(part_j)+0.2, dist, val1, 0) )
 										found_j.append(j_index)
 										total_conn += 1
+
+						sorted_conns = self.sort_conns(new_conns)
+						elastic_connections_collection.extend(sorted_conns)
 						elastic_connections_collection.extend([ElasticConnection(Const.NO_PARTICEL_ID,0,0,0)] * (Const.MAX_NUM_OF_NEIGHBOUR - total_conn))#len(particle_i_group)) )'''						
 					'''for orig_p_i in range(len(particles)-p_index_offset):
 						p_i = orig_p_i + p_index_offset
@@ -387,6 +451,9 @@ class ConfigSectsIO(object):
 						for c_i in range(conn_remaining)
 						elastic_connections_collection.extend([ElasticConnection(Const.NO_PARTICEL_ID,0,0,0)] * (Const.MAX_NUM_OF_NEIGHBOUR - total_conn))#len(particle_i_group)) )'''
 					elastic_found = False
+
+			particles.extend(liquid_particles)
+			print("tttttttTotal Particlessssssssssss ",len(particles))
 
 			# create pmis
 			print("particles:")
@@ -458,6 +525,8 @@ class ConfigSectsIO(object):
 					particles[offset_i].position.y += y_trans
 					particles[offset_i].position.z += z_trans'''
 
+			#self.export_faces('./configurations/faces.txt', membranes)
+
 			#membranes = []
 			#parm_memb_index = []
 			#elastic_connections_collection = []
@@ -485,6 +554,7 @@ class ConfigSectsIO(object):
 			elif i == 2:
 				output_f.write("[membranes]\n")
 			elif i == 3:
+				#self.export_faces2();
 				output_f.write("[particleMemIndex]\n")								
 			elif i == 4:
 				output_f.write("[end]\n")

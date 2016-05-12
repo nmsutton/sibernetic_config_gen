@@ -139,8 +139,8 @@ if __name__ == '__main__':
 	pmi_file = "./configurations/part_memb_index.txt"
 	#col_file = "/CompNeuro/Software/openworm/general/current_3d/new_worm10.dae"
 	#col_file = "/CompNeuro/Software/openworm/general/current_3d/full_scene2.dae"
-	col_file = "/CompNeuro/Software/openworm/general/current_3d/full_scene8.dae"
-	#col_file = "/CompNeuro/Software/openworm/general/current_3d/basic2.dae"
+	#col_file = "/CompNeuro/Software/openworm/general/current_3d/full_scene8.dae"
+	col_file = "/CompNeuro/Software/openworm/general/current_3d/basic3.dae"
 	conf_file_group = [p_file, v_file, c_file, m_file, pmi_file]
 	#g = Generator(120.24, 80.16, 180.36, particle_count = 1024*16)
 	h = 20.0 * Const.h
