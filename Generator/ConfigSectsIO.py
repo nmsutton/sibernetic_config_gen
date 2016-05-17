@@ -433,9 +433,9 @@ class ConfigSectsIO(object):
 										dz2 *= dz2 
 										nMi = particles.index(part_i)*nMuscles/len(particles[start_p_i:end_p_i]);
 										val1 = (1.1+nMi)*float((dz2 > 100*dx2)and(dz2 > 100*dy2)) 
-										val1 = 1.1
-										dist_mult = 2000.0#500.0#2000.0
-										dist = Particle.distBetween_particles(part_j,part_i) * dist_mult
+										#val1 = 1.1
+										dist_mult = 100#.05*2000.0#500.0#2000.0
+										dist = ((Particle.distBetween_particles(part_j,part_i)**1.5) * dist_mult)
 
 										#elastic_connections_collection.append( ElasticConnection(particles.index(part_j), dist, val1, 0) )
 										new_conns.append( ElasticConnection(particles.index(part_j)+0.2, dist, val1, 0) )
