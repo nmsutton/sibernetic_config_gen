@@ -83,7 +83,6 @@ def put_configto_file_temp(generator, pos_file="./configurations/position.txt", 
 		output_f_v.write(s_temp)
 	output_f_v.close()
 	output_f_conn = open(con_file, "w")
-	#output_f_conn.write(str(len(generator.elasticConnections)) + '\n')
 	for  e_c in generator.elasticConnections:
 		s_temp = "%s\t%s\t%s\t%s\n"%(e_c.particle_j,e_c.r_ij, e_c.val1, e_c.val2)
 		output_f_conn.write(s_temp)
@@ -94,8 +93,6 @@ def put_configto_file_temp(generator, pos_file="./configurations/position.txt", 
 		output_f_memb.write(s_temp)
 	output_f_memb.close()
 	output_f_pmi = open(pmi_file, "w")	
-	print("generator.part_memb_index")
-	print(len(generator.part_memb_index)/float(7))
 	for pmi in generator.part_memb_index:
 		s_temp = "%s\n"%(pmi)
 		output_f_pmi.write(s_temp)
@@ -117,7 +114,7 @@ def return_args():
 	in_file = ''
 	out_file = ''
 	phy_file = ''
-	phy_val = 1
+	phy_val = 1.0
 	kwargs, args = getopt.getopt(sys.argv[1:],"i:p:m:o:")
 	for flag, arg_val in kwargs:
 		if flag == '-i':
@@ -136,16 +133,15 @@ if __name__ == '__main__':
 	c_file = "./configurations/connection_muscle.txt"
 	m_file = "./configurations/membranes.txt"
 	pmi_file = "./configurations/part_memb_index.txt"
-	col_file = "/CompNeuro/Software/openworm/general/current_3d/basic3.dae"
 	conf_file_group = [p_file, v_file, c_file, m_file, pmi_file]
+	in_file, out_file, phy_val, phy_file = return_args()
 	h = 20.0 * Const.h
 	w = 12.0 * Const.h
 	d = 20.0 * Const.h
-	in_file, out_file, phy_val, phy_file = return_args()
-	print("in_file",in_file)
-	print("out_file",out_file)
 	if in_file != '' and out_file != '':
 		print('importing and exporting scene')
+		print("in_file",in_file)
+		print("out_file",out_file)		
 		conf_ops = ConfigSectsIO()
 		boundry_box, particles_imported, connections_imported, membranes, part_memb_index = conf_ops.import_collada(col_file=in_file)
 		h, w, d = boundry_box[1:6:2]

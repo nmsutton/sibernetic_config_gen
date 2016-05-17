@@ -136,14 +136,9 @@ class ConfigSectsIO(object):
 				boundry_box[4] += z_p_trans
 				boundry_box[5] += z_p_trans
 
-			print("~~boundry_box~~", boundry_box)
-
 			for sect in section_coords:
-				sect_3d_object = sect[0]		
-				print (trans_3d_object, " ", sect_3d_object)			
+				sect_3d_object = sect[0]					
 				if trans_3d_object == sect_3d_object:
-					print ("section_coords", " ", section_coords)
-					print("p size ",len(particles))	
 					if liquid_pattern.match(trans_3d_object):
 						sect_start = sect[1] + elastic_offset + offset_counter
 						sect_end = sect[2] + elastic_offset + offset_counter
@@ -151,7 +146,7 @@ class ConfigSectsIO(object):
 					else:
 						sect_start = sect[1]
 						sect_end = sect[2]
-					print(sect_start, "\t", sect_end)
+
 					for i in range(sect_end - sect_start):
 						offset_i = i+sect_start
 						#scale
@@ -163,7 +158,11 @@ class ConfigSectsIO(object):
 						particles[offset_i].position.y += y_p_trans
 						particles[offset_i].position.z += z_p_trans						
 
-		'''# precalculate Sin - Cos
+		''' 
+		Code below for potential rotation interpreting from
+		collada files
+
+		# precalculate Sin - Cos
 		angx = 0; angy = 0; angz = 0
 		cx = math.cos(angx); sx = math.sin(angx) 
 		cy = math.cos(angy); sy = math.sin(angy) 
@@ -182,7 +181,8 @@ class ConfigSectsIO(object):
 		# rotate z-axis
 		x1=(cz*x2)+(sz*y2)
 		y1=(cz*y2)+(sz*x2)
-		z1=z2					'''
+		z1=z2					
+		'''
 
 		return boundry_box, particles		
 
@@ -212,7 +212,6 @@ class ConfigSectsIO(object):
 	def export_faces(self, out_file, membranes):
 		output_f = open(out_file,"w")
 
-		print("mem range ", len(membranes))
 		for face_i in range(len(membranes)):
 			p1 = (float(membranes[face_i][0]))
 			p2 = (float(face_i))
@@ -220,39 +219,9 @@ class ConfigSectsIO(object):
 			p4 = (float(face_i))
 			p5 = (float(membranes[face_i][2]))
 			p6 = (float(face_i))
-			#p_type = "{0:.2g}".format(float(p_t))
 			output_f.write(str(p1)+" "+str(p2)+" "+str(p3)+" "+str(p4)+" "+str(p5)+" "+str(p6)+" ")
-			#output_f.write("\n")
 
 		output_f.close()
-
-	def export_faces2(self):
-		'''in_file = '/CompNeuro/Software/openworm/general/current_3d/faces3.txt'
-		out_file = './configurations/faces4.txt'
-		#input_f = open(in_file, "r")
-		output_f = open(out_file,"w")
-		memb_pattern = "(\S+)\s(\S+)\s(\S+)(\s)(\S+)"
-		line_counter = 0
-
-		with open(in_file, "r") as ins:
-			for line in ins:
-				for  in re.finditer(memb_pattern, line.rstrip()):
-				line_counter++
-
-		print("mem range ", len(membranes))
-		for face_i in range(len(membranes)):
-			p1 = (float(membranes[face_i][0]))
-			p2 = (float(face_i))
-			p3 = (float(membranes[face_i][1]))
-			p4 = (float(face_i))
-			p5 = (float(membranes[face_i][2]))
-			p6 = (float(face_i))
-			#p_type = "{0:.2g}".format(float(p_t))
-			output_f.write(str(p1)+" "+str(p2)+" "+str(p3)+" "+str(p4)+" "+str(p5)+" "+str(p6)+" ")
-			#output_f.write("\n")
-
-		output_f.close()		'''
-		return 0
 
 	def import_collada(self, col_file):
 		'''
@@ -261,20 +230,15 @@ class ConfigSectsIO(object):
 
 		<x, z, y> it appears works
 
-		Collada transforms work as follows:
-		<matrix>
-		 1.0 0.0 0.0 2.0 # x moves 1*2 further
-		 0.0 1.0 0.0 3.0 # y moves 1*3 further
-		 0.0 0.0 1.0 4.0 # z moves 1*4 further
-		 0.0 0.0 0.0 1.0 # x,y,z moves 0*1 further
-		</matrix> 
-		NOTE: unclear if row 4 applies translation uniformly or along individual axes.
-		Assuming individual axes for now, such as <x,y,z,s> and x moves x*s further.
+		Importing collada transforms need 'TransRotLoc' and not 'Matrix' style 
+		transforms currently
 
 		TODO: rotation not implemented in transformations yet
+
+		Currently only importing one elastic mesh and boundry box is supported.  Multiple 
+		liquid meshes can be imported.
 		'''
 		print("collada import")
-		#meshes = Collada(col_file)
 		boundry_box = [0, 100.2, 0, 66.8, 0, 668] #default
 		boundry_parts = []
 		elast_pos_section = re.compile(".*<float_array id=\"(elastic.*)-mesh-positions-array\" count=\"\d+\">.*")
@@ -309,11 +273,9 @@ class ConfigSectsIO(object):
 		with open(col_file, "r") as ins:
 			for line in ins:
 				if elast_pos_section.match(line.rstrip()):
-					print("###########")
 					p_type = 2.1
 					new_particles = self.extract_particles(p_type, line, xml_pattern, vertex_pattern)
 					elastic_particles.extend(new_particles)
-					#particles.extend(new_particles)
 					elastic_found = True	
 
 					object_3d_name = elast_pos_section.match(line.rstrip()).group(1)
@@ -322,8 +284,6 @@ class ConfigSectsIO(object):
 					p_type = 1.1
 					new_particles = self.extract_particles(p_type, line, xml_pattern, vertex_pattern)
 					liquid_particles.extend(new_particles)
-					print("+-=-+liquid found+-=-+ ",len(liquid_particles))
-					#particles.extend(new_particles)
 
 					object_3d_name = liquid_pos_section.match(line.rstrip()).group(1)
 					section_coords.append([object_3d_name, 0, len(new_particles)])
@@ -361,47 +321,12 @@ class ConfigSectsIO(object):
 					start_p_i = section_coords[-1][1]
 					end_p_i = section_coords[-1][2]
 					p_index_offset = start_p_i
-					#conn_created = [0]*len(particles)
 
-					#elastic_connections_collection.extend([ElasticConnection(Const.NO_PARTICEL_ID,0,0,0)] * (Const.MAX_NUM_OF_NEIGHBOUR * len(particles)))
-					# fill in prior particle connections
-					#elastic_connections_collection.extend([ElasticConnection(Const.NO_PARTICEL_ID,0,0,0)] * (Const.MAX_NUM_OF_NEIGHBOUR * (start_p_i - 1)))
-					'''for i in range(end_p_i-start_p_i):
-						conn_created.append([p_index_offset, 0])'''
-					print("p_index_offset ", p_index_offset)
 					for tris in re.finditer(tris_triplet, tris_section.match(line.rstrip()).group(1)):
 						# create elastic connections
-						p1 = int(tris.group(1))#p_index_offset + int(tris.group(1))
-						p3 = int(tris.group(3))#p_index_offset + int(tris.group(3))
-						p5 = int(tris.group(5))#p_index_offset + int(tris.group(5))
-						'''p1 = int(tris.group(1))
+						p1 = int(tris.group(1))
 						p3 = int(tris.group(3))
-						p5 = int(tris.group(5))	'''
-						'''particle_i_group = [ p1, p1, p3 ]
-						particle_j_group = [ p3, p5, p5 ]
-						val1 = 0.0'''
-						'''for p_index in range(len(particle_j_group)):
-							part_i = particles[particle_i_group[p_index]]
-							part_j = particles[particle_j_group[p_index]]
-							unsorted_connections.append([[p1,p3],[p1,p5],[p3,p5]])'''
-						'''for p_index in range(len(particle_j_group)):
-							part_i = particles[particle_i_group[p_index]]
-							part_j = particles[particle_j_group[p_index]]
-							part_i_index = particle_i_group[p_index]
-							if (conn_created[part_i_index] < Const.MAX_NUM_OF_NEIGHBOUR):
-								existing_conn = False
-								for existing_conn_i in range(Const.MAX_NUM_OF_NEIGHBOUR):
-									existing_i = ((part_i_index-p_index_offset)*Const.MAX_NUM_OF_NEIGHBOUR) + existing_conn_i
-									#print("particles.index(part_j)", particles.index(part_j))
-									#print(elastic_connections_collection[existing_i].particle_j)
-									if (particles.index(part_j)+0.1) == elastic_connections_collection[existing_i].particle_j:
-										existing_conn = True
-								if existing_conn == False:
-									val1 = self.calc_part_val1(particles, part_i, part_j, nMuscles)
-
-									ec_i = ((part_i_index-p_index_offset)*Const.MAX_NUM_OF_NEIGHBOUR) + conn_created[part_i_index]
-									elastic_connections_collection[ec_i] = ElasticConnection(particles.index(part_j),Particle.distBetween_particles(part_j,part_i), val1, 0)
-									conn_created[part_i_index] += 1'''
+						p5 = int(tris.group(5))
 								
 						unsorted_connections.append([[p1,p3],[p1,p5],[p3,p5]])
 
@@ -409,12 +334,9 @@ class ConfigSectsIO(object):
 						membrane_triple = [p1, p3, p5]
 						if not membrane_triple in membranes:
 							membranes.append(membrane_triple)
-						# add blanks
-					#for orig_p_i in range(len(particles)-p_index_offset):
-					#print("unsorted_connections ",len(unsorted_connections))
-					for orig_p_i in range(len(particles)):#[start_p_i:end_p_i]:
-						#print("particles ",len(particles))
-						p_i = orig_p_i# + p_index_offset
+
+					for orig_p_i in range(len(particles)):
+						p_i = orig_p_i
 						total_conn = 0
 						#val1 = 1.0
 						found_j = []
@@ -426,7 +348,6 @@ class ConfigSectsIO(object):
 								if (p_i == conn_1 or p_i == conn_2) and (total_conn < Const.MAX_NUM_OF_NEIGHBOUR):# and p_i < 482:
 									part_i = particles[p_i]
 									j_index = (p_i == conn_1) and conn_2 or conn_1
-									#print(j_index)
 									part_j = particles[j_index]
 									if not j_index in found_j:
 										val1 = 0
@@ -441,8 +362,6 @@ class ConfigSectsIO(object):
 										#val1 = 1.1
 										dist_mult = 100#.05*2000.0#500.0#2000.0
 										dist = ((Particle.distBetween_particles(part_j,part_i)**1.5) * dist_mult)
-
-										#elastic_connections_collection.append( ElasticConnection(particles.index(part_j), dist, val1, 0) )
 										new_conns.append( ElasticConnection(particles.index(part_j)+0.2, dist, val1, 0) )
 										found_j.append(j_index)
 										total_conn += 1
@@ -450,21 +369,15 @@ class ConfigSectsIO(object):
 						sorted_conns = self.sort_conns(new_conns)
 						elastic_connections_collection.extend(sorted_conns)
 						elastic_connections_collection.extend([ElasticConnection(Const.NO_PARTICEL_ID,0,0,0)] * (Const.MAX_NUM_OF_NEIGHBOUR - total_conn))#len(particle_i_group)) )'''						
-					'''for orig_p_i in range(len(particles)-p_index_offset):
-						p_i = orig_p_i + p_index_offset
-						conn_remaining = Const.MAX_NUM_OF_NEIGHBOUR - conn_created[particles.index(p_i)]
-						for c_i in range(conn_remaining)
-						elastic_connections_collection.extend([ElasticConnection(Const.NO_PARTICEL_ID,0,0,0)] * (Const.MAX_NUM_OF_NEIGHBOUR - total_conn))#len(particle_i_group)) )'''
+
 					elastic_found = False
 
 			particles.extend(liquid_particles)
-			print("tttttttTotal Particlessssssssssss ",len(particles))
 
 			# create pmis
 			print("particles:")
 			print(float(len(particles)))
 			for p_i in range(len(particles)):
-				#print(particles[p_i].type)
 				if particles[p_i].type == 2.1:
 					pmi_group = []
 					for m_i in range(len(membranes)):
@@ -482,55 +395,7 @@ class ConfigSectsIO(object):
 			print(len(parm_memb_index)/float(Const.MAX_MEMBRANES_INCLUDING_SAME_PARTICLE))
 
 			# transforms	
-			'''print("trans_loc")
-			print(trans_loc)
-			print("section_coords")
-			print(section_coords)'''
-			print("trans_loc")
-			print(trans_loc)
-			print("trans_scale")
-			print(trans_scale)
-
-			'''for trans in trans_scale:
-				boundry_box, particles = self.translate_mesh("scale", trans, section_coords, boundry_pattern, liquid_pattern, boundry_box, particles)
-
-			for trans in trans_loc:
-				boundry_box, particles = self.translate_mesh("position", trans, section_coords, boundry_pattern, liquid_pattern, boundry_box, particles)'''
-
 			boundry_box, particles = self.translate_mesh(trans_scale, trans_loc, section_coords, sect_patterns, boundry_box, particles)
-
-			'''trans_3d_object = trans[0]
-			sect_3d_object = sect[0]
-			x_trans = float(trans[1])
-			y_trans = float(trans[2])
-			z_trans	= float(trans[3])
-			if trans_3d_object == sect_3d_object and boundry_pattern.match(trans_3d_object):
-				print("boundry_box")
-				print(boundry_box)
-				print('x_trans')
-				print(float(trans[2]))
-				print(float(trans[4]))
-				print(x_trans)
-				print('y_trans')	
-				print(y_trans)
-				boundry_box[0] += x_trans
-				boundry_box[1] += x_trans
-				boundry_box[2] += y_trans
-				boundry_box[3] += y_trans
-				boundry_box[4] += z_trans
-				boundry_box[5] += z_trans
-				print("boundry_box")
-				print(boundry_box)						
-			elif trans_3d_object == sect_3d_object:
-				sect_start = sect[1]
-				sect_end = sect[2]
-				for i in range(sect_end - sect_start):
-					offset_i = i+sect_start
-					particles[offset_i].position.x += x_trans
-					particles[offset_i].position.y += y_trans
-					particles[offset_i].position.z += z_trans'''
-
-			#self.export_faces('./configurations/faces.txt', membranes)
 
 			#membranes = []
 			#parm_memb_index = []
@@ -559,7 +424,6 @@ class ConfigSectsIO(object):
 			elif i == 2:
 				output_f.write("[membranes]\n")
 			elif i == 3:
-				#self.export_faces2();
 				output_f.write("[particleMemIndex]\n")								
 			elif i == 4:
 				output_f.write("[end]\n")

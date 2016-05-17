@@ -43,7 +43,6 @@ class ElasticConnection(object):
     classdocs
     '''
 
-
     def __init__(self,particle_j_id, distance, val1=0, val2=0):
         '''
         Constructor
