@@ -147,7 +147,7 @@ if __name__ == '__main__':
 	if in_file != '' and out_file != '':
 		print('importing and exporting scene')
 		conf_ops = ConfigSectsIO()
-		boundry_box, particles_imported, connections_imported, membranes, part_memb_index = conf_ops.import_collada(col_file=col_file)
+		boundry_box, particles_imported, connections_imported, membranes, part_memb_index = conf_ops.import_collada(col_file=in_file)
 		h, w, d = boundry_box[1:6:2]
 		g = Generator(h, w, d, phy_val=phy_val)				
 		part_phys_mod = phy_val
