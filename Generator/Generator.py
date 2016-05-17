@@ -64,7 +64,7 @@ class Generator(object):
         self.membranes = []
         self.part_memb_index = []
     def genConfiguration(self, gen_muscle=False,gen_elastic=False,gen_liquid=True, \
-            particles_imported=[],part_phys_mod=[],connections_imported=[]):
+            particles_imported=[],part_phys_mod=1.0,connections_imported=[]):
         print "generating configuration"
         print "\tgenerating Elastic Particles"
         i = 0
@@ -93,8 +93,6 @@ class Generator(object):
             if gen_elastic:
                 print "\tgenerating Elastic Connections"
                 elasticParticles = [p for p in self.particles if p.type == Const.elastic_particle ]
-                #print("elasticParticles")
-                #print len(elasticParticles)
                 for e_p_i in range(len(elasticParticles)):
                     self.__genElasticConn(elasticParticles[e_p_i], elasticParticles, part_phys_mod)
                 print len(self.elasticConnections)
@@ -366,11 +364,10 @@ class Generator(object):
         '''        
         nMi = elasticParticles.index(particle)*self.nMuscles/len(elasticParticles);
         neighbour_collection = []
-        part_phys_mod = 0.0
         for p_i in range(len(elasticParticles)):
             p = elasticParticles[p_i]
             #if Particle.dot_particles(particle, p) <= (part_phys_mod[p_i]*part_phys_mod[p_i]) * 3.05 and p != particle:
-            if Particle.dot_particles(particle, p) <= part_phys_mod * 3.05 and p != particle:
+            if Particle.dot_particles(particle, p) <= (part_phys_mod*part_phys_mod) * 3.05 and p != particle:
                 neighbour_collection.append(p)
         #neighbour_collection = [p for p in elasticParticles if Particle.dot_particles(particle, p) <= mod_squared_r0 * 3.05 and p != particle ]
         neighbour_collection.sort(key=lambda p: Particle.distBetween_particles(particle, p))

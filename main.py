@@ -114,12 +114,11 @@ def create_xml_file(filename,generator):
 		xml_writer.add_connection(c)
 	xml_writer.printtoFile()
 def return_args():
-	#in_p_file = "/CompNeuro/Software/openworm/sibernetic_config_gen/configurations/position_muscle_copy3.txt"
-	in_file = ''#"/CompNeuro/Software/openworm/sibernetic_config_gen/configurations/position_test5.txt"
+	in_file = ''
 	out_file = ''
 	phy_file = ''
+	phy_val = 1
 	kwargs, args = getopt.getopt(sys.argv[1:],"i:p:m:o:")
-	#print "out:\n\n",kwargs
 	for flag, arg_val in kwargs:
 		if flag == '-i':
 			in_file = arg_val
@@ -137,12 +136,8 @@ if __name__ == '__main__':
 	c_file = "./configurations/connection_muscle.txt"
 	m_file = "./configurations/membranes.txt"
 	pmi_file = "./configurations/part_memb_index.txt"
-	#col_file = "/CompNeuro/Software/openworm/general/current_3d/new_worm10.dae"
-	#col_file = "/CompNeuro/Software/openworm/general/current_3d/full_scene2.dae"
-	#col_file = "/CompNeuro/Software/openworm/general/current_3d/full_scene8.dae"
 	col_file = "/CompNeuro/Software/openworm/general/current_3d/basic3.dae"
 	conf_file_group = [p_file, v_file, c_file, m_file, pmi_file]
-	#g = Generator(120.24, 80.16, 180.36, particle_count = 1024*16)
 	h = 20.0 * Const.h
 	w = 12.0 * Const.h
 	d = 20.0 * Const.h
@@ -150,23 +145,20 @@ if __name__ == '__main__':
 	print("in_file",in_file)
 	print("out_file",out_file)
 	if in_file != '' and out_file != '':
-		print('alt active')
+		print('importing and exporting scene')
 		conf_ops = ConfigSectsIO()
-		#boundry_box, particles_imported = conf_ops.import_conf(in_file=in_file)
-		part_phys_mod = conf_ops.import_part_phys(phy_file=phy_file)
 		boundry_box, particles_imported, connections_imported, membranes, part_memb_index = conf_ops.import_collada(col_file=col_file)
-		#connections_imported=[]
 		h, w, d = boundry_box[1:6:2]
-		g = Generator(h, w, d, phy_val=phy_val)
+		g = Generator(h, w, d, phy_val=phy_val)				
+		part_phys_mod = phy_val
 		g.genConfiguration(gen_elastic=True,gen_muscle=True,gen_liquid=False,particles_imported=particles_imported, \
 			part_phys_mod=part_phys_mod,connections_imported=connections_imported)
 		g.membranes = membranes
 		g.part_memb_index = part_memb_index
-		#g.genConfiguration(gen_elastic=True,gen_muscle=True,gen_liquid=False)
 		put_configto_file_temp(g,p_file,v_file,c_file,m_file,pmi_file)
 		conf_ops.export_conf(out_file=out_file, boundry_box=boundry_box, conf_file_group=conf_file_group)
 	else:
-		print('norm active')
+		print('importing and exporting scene is not active')
 		g = Generator(h, w, d)
 		g.genConfiguration(gen_elastic=True,gen_muscle=True,gen_liquid=False)
 		put_configto_file_temp(g,p_file,v_file,c_file)

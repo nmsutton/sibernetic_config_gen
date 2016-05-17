@@ -70,13 +70,18 @@ class ConfigSectsIO(object):
 		return boundry_box, particles
 
 	def import_part_phys(self, phy_file=''):
+		'''
+		Reserved for future use of importing physics values
+		for each individual particle
+		'''
 		part_phys_mod = []
 
-		with open(phy_file, "r") as ins:
-			for line in ins:			
-				if line.rstrip() != "":
-					p_i, p_v = line.rstrip().split("\t")
-					part_phys_mod.append(float(p_v))
+		if phy_file != '': 
+			with open(phy_file, "r") as ins:
+				for line in ins:			
+					if line.rstrip() != "":
+						p_i, p_v = line.rstrip().split("\t")
+						part_phys_mod.append(float(p_v))
 
 		return part_phys_mod	
 
