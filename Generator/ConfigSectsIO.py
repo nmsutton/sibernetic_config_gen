@@ -223,7 +223,7 @@ class ConfigSectsIO(object):
 
 		output_f.close()
 
-	def import_collada(self, col_file):
+	def import_collada(self, col_file, dist_scalar, dist_exp):
 		'''
 		Importing boundry box assumes box verticies are in collada file in format vertice 1-8 =
 		(0 0 0) (0 0 1) (0 1 0) (0 1 1) (1 0 0) (1 0 1) (1 1 0) (1 1 1)
@@ -359,9 +359,9 @@ class ConfigSectsIO(object):
 										dz2 *= dz2 
 										nMi = particles.index(part_i)*nMuscles/len(particles[start_p_i:end_p_i]);
 										val1 = (1.1+nMi)*float((dz2 > 100*dx2)and(dz2 > 100*dy2)) 
-										#val1 = 1.1
-										dist_mult = 100#.05*2000.0#500.0#2000.0
-										dist = ((Particle.distBetween_particles(part_j,part_i)**1.5) * dist_mult)
+
+										#print "dist_exp ", dist_exp, " dist_scalar ", dist_scalar
+										dist = ((Particle.distBetween_particles(part_j,part_i)**float(dist_exp)) * float(dist_scalar))
 										new_conns.append( ElasticConnection(particles.index(part_j)+0.2, dist, val1, 0) )
 										found_j.append(j_index)
 										total_conn += 1

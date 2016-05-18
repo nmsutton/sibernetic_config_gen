@@ -115,7 +115,9 @@ def return_args():
 	out_file = ''
 	phy_file = ''
 	phy_val = 1.0
-	kwargs, args = getopt.getopt(sys.argv[1:],"i:p:m:o:")
+	dist_scalar = 1.0
+	dist_exp = 1.0
+	kwargs, args = getopt.getopt(sys.argv[1:],"i:p:m:o:s:e:", ["dsca=","dexp="])
 	for flag, arg_val in kwargs:
 		if flag == '-i':
 			in_file = arg_val
@@ -125,8 +127,12 @@ def return_args():
 			phy_val = arg_val
 		elif flag == '-m':
 			phy_file = arg_val			
+		elif flag in ('-s', '--dsca'):
+			dist_scalar = arg_val
+		elif flag in ('-e', '--dexp'):
+			dist_exp = arg_val		
 
-	return in_file, out_file, phy_val, phy_file
+	return in_file, out_file, phy_val, phy_file, dist_scalar, dist_exp
 if __name__ == '__main__':
 	p_file = "./configurations/position_muscle.txt"
 	v_file = "./configurations/velocity_muscle.txt"
@@ -134,7 +140,7 @@ if __name__ == '__main__':
 	m_file = "./configurations/membranes.txt"
 	pmi_file = "./configurations/part_memb_index.txt"
 	conf_file_group = [p_file, v_file, c_file, m_file, pmi_file]
-	in_file, out_file, phy_val, phy_file = return_args()
+	in_file, out_file, phy_val, phy_file, dist_scalar, dist_exp = return_args()
 	h = 20.0 * Const.h
 	w = 12.0 * Const.h
 	d = 20.0 * Const.h
@@ -143,7 +149,8 @@ if __name__ == '__main__':
 		print("in_file",in_file)
 		print("out_file",out_file)		
 		conf_ops = ConfigSectsIO()
-		boundry_box, particles_imported, connections_imported, membranes, part_memb_index = conf_ops.import_collada(col_file=in_file)
+		boundry_box, particles_imported, connections_imported, membranes, part_memb_index = \
+		conf_ops.import_collada(col_file=in_file, dist_scalar=dist_scalar, dist_exp=dist_exp)
 		h, w, d = boundry_box[1:6:2]
 		g = Generator(h, w, d, phy_val=phy_val)				
 		part_phys_mod = phy_val
