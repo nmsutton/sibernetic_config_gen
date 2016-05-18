@@ -35,14 +35,11 @@ Created on 18.04.2016
 @author: nmsutton
 '''
 
-#from Generator import Generator
 from Particle import Particle, Float4
 from Const import Const
 from ElasticConnection import ElasticConnection
 import re
 import math as math
-#import numpy as np
-#import collada
 
 class ConfigSectsIO(object):
 	def import_conf(self, in_file):
@@ -95,9 +92,6 @@ class ConfigSectsIO(object):
 				particle = Particle(float(p_x),float(p_y),float(p_z),float(p_type))
 				particle.setVelocity(Float4(0.0,0.0,0.0,float(p_type)))
 				particles.append(particle)		
-		#print('found particles')
-		#print(particles)
-
 
 		return particles
 
@@ -228,8 +222,6 @@ class ConfigSectsIO(object):
 		Importing boundry box assumes box verticies are in collada file in format vertice 1-8 =
 		(0 0 0) (0 0 1) (0 1 0) (0 1 1) (1 0 0) (1 0 1) (1 1 0) (1 1 1)
 
-		<x, z, y> it appears works
-
 		Importing collada transforms need 'TransRotLoc' and not 'Matrix' style 
 		transforms currently
 
@@ -303,7 +295,6 @@ class ConfigSectsIO(object):
 					boundry_box = [x1, x2, y1, y2, z1, z2]			
 
 					object_3d_name = bound_pos_section.match(line.rstrip()).group(1)
-					#section_coords.append([object_3d_name, 0, len(new_particles)])
 				elif transf_section.match(line.rstrip()):
 					current_transf_name = transf_section.match(line.rstrip()).group(1)
 				elif tran_loc_sect.match(line.rstrip()):
@@ -323,7 +314,7 @@ class ConfigSectsIO(object):
 					p_index_offset = start_p_i
 
 					for tris in re.finditer(tris_triplet, tris_section.match(line.rstrip()).group(1)):
-						# create elastic connections
+						# read in elastic connections
 						p1 = int(tris.group(1))
 						p3 = int(tris.group(3))
 						p5 = int(tris.group(5))
@@ -335,32 +326,21 @@ class ConfigSectsIO(object):
 						if not membrane_triple in membranes:
 							membranes.append(membrane_triple)
 
-					for orig_p_i in range(len(particles)):
-						p_i = orig_p_i
+					# create connections
+					for p_i in range(len(particles)):
 						total_conn = 0
-						#val1 = 1.0
 						found_j = []
 						new_conns = []
 						for con_i in range(len(unsorted_connections)):
 							for connection in unsorted_connections[con_i]:
-								conn_1 = connection[0]# + p_index_offset
-								conn_2 = connection[1]# + p_index_offset
-								if (p_i == conn_1 or p_i == conn_2) and (total_conn < Const.MAX_NUM_OF_NEIGHBOUR):# and p_i < 482:
+								conn_1 = connection[0]
+								conn_2 = connection[1]
+								if (p_i == conn_1 or p_i == conn_2) and (total_conn < Const.MAX_NUM_OF_NEIGHBOUR):
 									part_i = particles[p_i]
 									j_index = (p_i == conn_1) and conn_2 or conn_1
 									part_j = particles[j_index]
 									if not j_index in found_j:
-										val1 = 0
-										dx2 = part_i.position.x - part_j.position.x
-										dy2 = part_i.position.y - part_j.position.y
-										dz2 = part_i.position.z - part_j.position.z
-										dx2 *= dx2
-										dy2 *= dy2
-										dz2 *= dz2 
-										nMi = particles.index(part_i)*nMuscles/len(particles[start_p_i:end_p_i]);
-										val1 = (1.1+nMi)*float((dz2 > 100*dx2)and(dz2 > 100*dy2)) 
-
-										#print "dist_exp ", dist_exp, " dist_scalar ", dist_scalar
+										val1 = self.calc_part_val1(particles, part_i, part_j, nMuscles)
 										dist = ((Particle.distBetween_particles(part_j,part_i)**float(dist_exp)) * float(dist_scalar))
 										new_conns.append( ElasticConnection(particles.index(part_j)+0.2, dist, val1, 0) )
 										found_j.append(j_index)
@@ -397,6 +377,7 @@ class ConfigSectsIO(object):
 			# transforms	
 			boundry_box, particles = self.translate_mesh(trans_scale, trans_loc, section_coords, sect_patterns, boundry_box, particles)
 
+			# test removing sections
 			#membranes = []
 			#parm_memb_index = []
 			#elastic_connections_collection = []
