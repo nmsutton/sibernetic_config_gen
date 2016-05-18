@@ -114,7 +114,7 @@ def return_args():
 	in_file = ''
 	out_file = ''
 	phy_file = ''
-	phy_val = 1.0
+	phy_val = 1.67
 	dist_scalar = 1.0
 	dist_exp = 1.0
 	kwargs, args = getopt.getopt(sys.argv[1:],"i:p:m:o:s:e:", ["dsca=","dexp="])

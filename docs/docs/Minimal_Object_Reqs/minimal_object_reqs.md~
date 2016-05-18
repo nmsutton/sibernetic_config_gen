@@ -4,11 +4,11 @@ Upon running the project sibernetic_config_gen 3 files are created, ./configurat
 <br>
 <br>minimal_config_file:
 <br>0
-<br>100.2
+<br>133.6
+<br>0
+<br>160.32
 <br>0
 <br>66.8
-<br>0
-<br>668
 <br>[position]
 <br>position_muscle.txt contents
 <br>[velocity]

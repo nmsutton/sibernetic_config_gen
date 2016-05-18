@@ -16,3 +16,5 @@ Upon running the project sibernetic_config_gen 3 files are created, ./configurat
 <br>[connection]
 <br>connection_muscle.txt contents
 <br>[end]
+<br>
+<br>NOTE: Make sure there are no spaces after the text in each line above.

@@ -46,7 +46,7 @@ class Generator(object):
     Configuration Generator class: class generate configuration 
     for initial size of box
     '''
-    def __init__(self, boxsizeX, boxsizeY, boxsizeZ, particle_count = 1024 * 16, phy_val = 1.0):
+    def __init__(self, boxsizeX, boxsizeY, boxsizeZ, particle_count = 1024 * 16, phy_val = 1.67):
         '''
         Constructor
         It's important that sizes of box are multiple with r0 = h * 0.5
@@ -64,7 +64,7 @@ class Generator(object):
         self.membranes = []
         self.part_memb_index = []
     def genConfiguration(self, gen_muscle=False,gen_elastic=False,gen_liquid=True, \
-            particles_imported=[],part_phys_mod=1.0,connections_imported=[]):
+            particles_imported=[],part_phys_mod=1.67,connections_imported=[]):
         print "generating configuration"
         print "\tgenerating Elastic Particles"
         i = 0
@@ -366,10 +366,8 @@ class Generator(object):
         neighbour_collection = []
         for p_i in range(len(elasticParticles)):
             p = elasticParticles[p_i]
-            #if Particle.dot_particles(particle, p) <= (part_phys_mod[p_i]*part_phys_mod[p_i]) * 3.05 and p != particle:
             if Particle.dot_particles(particle, p) <= (part_phys_mod*part_phys_mod) * 3.05 and p != particle:
                 neighbour_collection.append(p)
-        #neighbour_collection = [p for p in elasticParticles if Particle.dot_particles(particle, p) <= mod_squared_r0 * 3.05 and p != particle ]
         neighbour_collection.sort(key=lambda p: Particle.distBetween_particles(particle, p))
         if len(neighbour_collection) > Const.MAX_NUM_OF_NEIGHBOUR:
             neighbour_collection = neighbour_collection[0:Const.MAX_NUM_OF_NEIGHBOUR]
