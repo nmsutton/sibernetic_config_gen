@@ -1,8 +1,11 @@
 site_name: Sibernetic Config Gen Developer Docs
-pages:
-- Home: index.md
-- Config_File_Sections: Config_File_Sections/connections.md
-- Config_File_Sections/connections.md
-- Config_File_Sections: Config_File_Sections/positions.md
-- Config_File_Sections: Config_File_Sections/velocities.md
 theme: readthedocs
+pages:
+- [index.md, Home]
+- [Config_File_Sections/connections.md, Config File Sections, Connections]
+- [Config_File_Sections/positions.md, Config File Sections, Positions]
+- [Config_File_Sections/velocities.md, Config File Sections, Velocities]
+- [Config_File_Sections/membranes.md, Config File Sections, Membranes]
+- [Config_File_Sections/particle_mem_index.md, Config File Sections, ParticleMemIndex]
+- [Minimal_Object_Reqs/minimal_object_reqs.md, Minimal Object Reqs, Minimal Object Reqs]
+- [Working_With_New_Scenes/working_with_new_scenes.md, Working With New Scenes, Working With New Scenes]

@@ -117,7 +117,8 @@ def return_args():
 	phy_val = 1.67
 	dist_scalar = 1.0
 	dist_exp = 1.0
-	kwargs, args = getopt.getopt(sys.argv[1:],"i:p:m:o:s:e:", ["dsca=","dexp="])
+	help_output = False
+	kwargs, args = getopt.getopt(sys.argv[1:],"i:p:m:o:", ["dsca=","dexp=", "help"])
 	for flag, arg_val in kwargs:
 		if flag == '-i':
 			in_file = arg_val
@@ -127,12 +128,14 @@ def return_args():
 			phy_val = arg_val
 		elif flag == '-m':
 			phy_file = arg_val			
-		elif flag in ('-s', '--dsca'):
+		elif flag in ('--dsca'):
 			dist_scalar = arg_val
-		elif flag in ('-e', '--dexp'):
+		elif flag in ('--dexp'):
 			dist_exp = arg_val		
+		elif flag in ('--help'):
+			help_output = True
 
-	return in_file, out_file, phy_val, phy_file, dist_scalar, dist_exp
+	return in_file, out_file, phy_val, phy_file, dist_scalar, dist_exp, help_output
 if __name__ == '__main__':
 	p_file = "./configurations/position_muscle.txt"
 	v_file = "./configurations/velocity_muscle.txt"
@@ -140,11 +143,22 @@ if __name__ == '__main__':
 	m_file = "./configurations/membranes.txt"
 	pmi_file = "./configurations/part_memb_index.txt"
 	conf_file_group = [p_file, v_file, c_file, m_file, pmi_file]
-	in_file, out_file, phy_val, phy_file, dist_scalar, dist_exp = return_args()
+	in_file, out_file, phy_val, phy_file, dist_scalar, dist_exp, help_output = return_args()
 	h = 20.0 * Const.h
 	w = 12.0 * Const.h
 	d = 20.0 * Const.h
-	if in_file != '' and out_file != '':
+	print('\nRun --help for command line argument options description\n')
+	if help_output == True:
+		print('example usage of this program:')
+		print('$ python main.py')
+		print('runs in demo mode where a basic scene is made')
+		print('Arguments that can be used:')
+		print('-i = input collada file to import')
+		print('-o = output config file for sibernetic')
+		print('--dsca = number to multiply to distance formula for')
+		print('generating elastic connections')
+		print('--dexp = exponent to apply to distance formula')
+	elif in_file != '' and out_file != '':
 		print('importing and exporting scene')
 		print("in_file",in_file)
 		print("out_file",out_file)		

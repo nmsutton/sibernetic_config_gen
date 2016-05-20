@@ -1,0 +1,53 @@
+# Import Worm Created in Blender and Export Config File
+
+## Part I: Create a worm in blender
+An alternative to this is to use an already created .dae collada file for a worm from a provided .blend file.  When working with the files in blender use the .blend file not importing the .dae file because .dae blender import seems to cause issues.
+
+Use blender cycles render
+create a plane by shift+a, select plane
+rotate on x-axis, go to edit mode, select all verticies, select plane and 'r', 'x', '90' to rotate 90 degrees.  Do *not* rotate an object in 'object mode' or the rotation will not appear in the collada import, always rotate in edit mode.
+subdivide the plane, a suggested number of time is 3.  while in mesh edit mode press 'w' and select 'subdivide' 3 times
+starting from outermost vertices extrude each successive square region to create box sections.  Extruding is done when vertices are selected with 'e', pressing 'y' constricts it to the y-axis.  Make sure to *not* extrude the last inner square region because that causes issues with later smoothing ends of the mesh.
+Add an even number of y-axis sections with the ring split tool by pressing ctrl+r.  Create an even number of y-axis sections in along the y-axis
+duplicate mesh with shift+d and flip it with 'r','x','180'.  Select both meshes and join them with ctrl+j
+Go to edit mode.  Join the 2 meshes with alt+m on each appropriate vertex at the middle of the mesh.
+<insert picture example of results>
+
+Select all verticies
+Repeatedly run the smoothing command by pressing 'w' and select 'smoothing'.  In my test case performing this 15 times created the smooth worm effect wanted.  What is desired is to turn the box-style shape into a smooth worm shape.  Watch out for overdoing smoothing because fairly even lengths of edge sizes are wanted and too much smoothing causes issues with that.
+<insert picture example of results>
+
+NOTE: rotation of object is not yet able to be interpreted in the collada import.  If rotation is wanted than go to edit mode and select all vertices and create the rotation.
+
+## Part II: Create a boundry box and liquids in blender
+Create cube where all x,y, and z coordinates are positive.  This will be the boundry box and negative coordinates in that cause issues.  The box should be above the scene axis of 0 height in the red, green, and blue (x,y,z) directions.  Boundry_box should be increased in scale largely, as a suggestion 20x the size of the positive y,x quadrant of blender's initial viewport grid along the x,y, z axes used for scaling evaluation.
+Move the worm to the center of the box.
+NOTE: each object should be its own mesh object, do not combine objects because each object will have a different particle type.
+Remove faces from the box by going into edit mode and selecting all vertices, pressing 'x' and delete 'only faces'
+Create cubes that will be used for liquid by creating cubes and subdividing them one or more times such as 2 times and place them inside the worm.  Rescale them so that they all fit inside the worm.
+Remove faces from the liquid cubes as described above.
+Create liquid plane somewhat smaller than the side of the boundry box on the x-axis.  Subdivide it two or more times.  Rotate the plane with edit mode, select all vertices, 'r','x','90'.  Center the plane somewhat inside of the boundry box on the side aong the x-axis.
+<insert picture example of results>
+
+Renaming:
+In the scene list description at the top right of the default layout of blender rename both the object and its vertices by double clicking the name of the object and changing the object name, click '+' on the left to expand to change the vertices name.  Capitalization matters, change the boundry box to 'boundry_box', the worm to 'elastic_1', liquids to 'liquid_1', 'liquid_2', etc.  If wanted the numbers parts can be changed to any other description, all objects need unique names.
+<insert picture example of results>
+
+## Part III: Exporting the worm in blender
+It is recommended to delete the camera and lamp from the scene because they will not be used.
+In object mode click 'a' to select all objects.  Click File Menu->Export->Collada.  It is important to on the bottom left under export Collada options to select 'Selection Only' and change the transformation type to 'TransRotLoc'.  These options will need to be reselected every time blender is restarted unless the options can be permanently saved.  Choose a name and export the collada file to the directory you want to be used for sibernetic_config_gen to later import it.
+
+## Part IV: Importing and Exporting in sibernetic_config_gen
+Run a command with the .dae collada file such as:
+python main.py -i /openworm/bender_scene.dae -o /openworm/blender_scene_config --dsca 100.0 --dexp 1.5
+ .  Work with scaling, positioning of meshes in the scene and dsca and dexp in sibernetic_config_gen to get desired results.  sibernetic_config_gen uses the euclidean distance formula to calculate elastic strenghts,  dsca is a scalar multiple of that and dexp is an exponent applied to that.  Because the vertices and edges have custom lengths modifications of the calucations in that way is needed to have sibernetic produce stable meshes.
+
+## Troubleshooting Tips
+Objects are out of place and warped:
+Make absolutely sure the in export Collada options the selections are present 'Selection Only' and change the transformation type to 'TransRotLoc'.  Blender has been observed to reset that and it causes many issues.
+
+The worm warps out of shape and is unstable.
+Keep trying different scales of the meshes including boundry_box and different dist_exp and dist_scalar values to get a meshes that are stable, this can take notable trial and error potentially.  Distribution of liquid in the worm makes a difference in it remaining a stable shape.  If nothing is visible try zooming around the scene, everything could be scaled too largely.  
+
+Sibernetic crashes:
+The simulator very possibly can run into situations where the parameters of the scene are not compatible with what it can compute.  Keep tweaking the model and possibly physics to look for ways to avoid this occurrence if it comes up.
