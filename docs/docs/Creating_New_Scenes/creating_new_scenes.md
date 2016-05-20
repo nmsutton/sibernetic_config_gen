@@ -40,9 +40,9 @@ In object mode click 'a' to select all objects.  Click File Menu->Export->Collad
 ## Part IV: Importing and Exporting in sibernetic_config_gen
 Run a command with the .dae collada file such as:
 python main.py -i /openworm/bender_scene.dae -o /openworm/blender_scene_config --dsca 100.0 --dexp 1.5
- .  Work with scaling, positioning of meshes in the scene and dsca and dexp in sibernetic_config_gen to get desired results.  sibernetic_config_gen uses the euclidean distance formula to calculate elastic strenghts,  dsca is a scalar multiple of that and dexp is an exponent applied to that.  Because the vertices and edges have custom lengths modifications of the calucations in that way is needed to have sibernetic produce stable meshes.
+ .  Work with scaling, positioning of meshes in the scene and dsca and dexp in sibernetic_config_gen to get desired results.  sibernetic_config_gen uses the euclidean distance formula to calculate elastic strengths,  dsca is a scalar multiple of that and dexp is an exponent applied to that.  Because the vertices and edges have custom lengths modifications of the calucations in that way is needed to have sibernetic produce stable meshes.
 
-## Troubleshooting Tips:
+## Troubleshooting Tips
 Objects are out of place and warped:
 Make absolutely sure the in export Collada options the selections are present 'Selection Only' and change the transformation type to 'TransRotLoc'.  Blender has been observed to reset that and it causes many issues.
 

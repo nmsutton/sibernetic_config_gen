@@ -157,7 +157,10 @@ if __name__ == '__main__':
 		print('-o = output config file for sibernetic')
 		print('--dsca = number to multiply to distance formula for')
 		print('generating elastic connections')
-		print('--dexp = exponent to apply to distance formula')
+		print('--dexp = exponent to apply to distance formula\n')
+		print('Example run with args:')
+		print('python main.py -i ./3d_modelling/proto_down_wrm.dae -o ./3d_modelling/proto_down_wrm --dsca 100.0 --dexp 1.5')
+		print('For more info see: http://sibernetic-config-gen-docs.readthedocs.io/')
 	elif in_file != '' and out_file != '':
 		print('importing and exporting scene')
 		print("in_file",in_file)
