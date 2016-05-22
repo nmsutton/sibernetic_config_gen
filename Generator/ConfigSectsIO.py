@@ -96,7 +96,6 @@ class ConfigSectsIO(object):
 		return particles
 
 	def translate_mesh(self, trans_scale, trans_loc, section_coords, sect_patterns, boundry_box, particles):
-		print "section_coords ", section_coords
 		elastic_pattern = sect_patterns[0]
 		liquid_pattern = sect_patterns[1]
 		boundry_pattern = sect_patterns[2]
@@ -329,11 +328,6 @@ class ConfigSectsIO(object):
 					trans_entry.extend(trans_coords.split(' '))
 					trans_scale.append(trans_entry)
 				elif tris_section.match(line.rstrip()) and elastic_found == True:
-					'''start_p_i = section_coords[-1][1]
-					end_p_i = section_coords[-1][2]
-					p_index_offset = start_p_i'''
-					#elastic_connections_collection = [None]*Const.MAX_NUM_OF_NEIGHBOUR*len(particles)*3
-
 					for tris in re.finditer(tris_triplet, tris_section.match(line.rstrip()).group(1)):
 						# read in elastic connections
 						p1 = int(tris.group(1))
@@ -347,18 +341,15 @@ class ConfigSectsIO(object):
 						if not membrane_triple in membranes:
 							membranes.append(membrane_triple)
 
-						# add code to record when muscle section verts are found
+						# find muscles
 						if ptype_found == True and current_ptype_name == "muscle":
 							muscle_particles.append([p1,p3])
 							muscle_particles.append([p1,p5])
 							muscle_particles.append([p3,p5])
-
-							ptype_found = False
+					ptype_found = False
 
 				if geo_section_end.match(line.rstrip()) and elastic_found == True:
-					#after unsorted_connections is filled up now create elastics
-					#implement extending to fill out rest of connections
-					# create connections
+					# after unsorted_connections is filled up now elastic connections are created
 					for p_i in range(len(particles)):
 						total_conn = 0
 						found_j = []
@@ -382,37 +373,10 @@ class ConfigSectsIO(object):
 										total_conn += 1
 
 						sorted_conns = self.sort_conns(new_conns)
-						#sorted_conns.extend([ElasticConnection(Const.NO_PARTICEL_ID,0,0,0)] * (Const.MAX_NUM_OF_NEIGHBOUR - total_conn))
-						#for 
 						elastic_connections_collection.extend(sorted_conns)
 						elastic_connections_collection.extend([ElasticConnection(Const.NO_PARTICEL_ID,0,0,0)] * (Const.MAX_NUM_OF_NEIGHBOUR - total_conn))
 
 					elastic_found = False
-				#elif tris_section.match(line.rstrip()) and elastic_found == False and ptype_found == True:
-					'''
-					# Change ptypes based on material
-					for tris in re.finditer(tris_triplet, tris_section.match(line.rstrip()).group(1)):
-						# read in edges in materials
-						p = []
-						for i in range(7):
-							if i > 0:
-								p.append(int(tris.group(i)))
-								
-						# find corresponding edge
-						for i in range(3):
-							p_1 = p[2*i]
-							p_2 = p[(2*i)+1]
-							conn_start = Const.MAX_NUM_OF_NEIGHBOUR*p_1
-
-							for i2 in range(Const.MAX_NUM_OF_NEIGHBOUR):
-								conn_i = conn_start+i2
-								print "conn_i ", conn_i, " len(elastic_connections_collection) ", len(elastic_connections_collection)
-								if elastic_connections_collection[conn_i].particle_j == p_2:
-									# set particle types
-									if current_ptype_name == "muscle":
-										elastic_connections_collection[conn_i].val1 = 1.1
-					'''
-				#	ptype_found = False
 
 			particles.extend(liquid_particles)
 
