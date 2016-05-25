@@ -196,7 +196,7 @@ class ConfigSectsIO(object):
 	def calc_ptype(self, muscle_particles, p_i, p_j):
 		val1 = 0.0
 		if ([p_i, p_j] in muscle_particles) or ([p_j, p_i] in muscle_particles):
-			val1 = 1.1
+			val1 = 1.1#0.0#96.5#1.1
 
 		return val1		
 

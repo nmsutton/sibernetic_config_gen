@@ -30,7 +30,11 @@ Create liquid plane somewhat smaller than the side of the boundry box on the x-a
 <center><a target="_blank" href='http://i.imgur.com/q3G8QZ6.jpg'><img src='http://i.imgur.com/q3G8QZ6.jpg' height='113' width='200'><br>Example Image</a></center>
 
 Renaming:
-In the scene list description at the top right of the default layout of blender rename both the object and its vertices by double clicking the name of the object and changing the object name, click '+' on the left to expand to change the vertices name.  Capitalization matters, change the boundry box to 'boundry_box', the worm to 'elastic_1', liquids to 'liquid_1', 'liquid_2', etc.  If wanted the numbers parts can be changed to any other description, all objects need unique names.  See above image for naming example.
+<br>In the scene list description at the top right of the default layout of blender rename both the object and its vertices by double clicking the name of the object and changing the object name, click '+' on the left to expand to change the vertices name.  Capitalization matters, change the boundry box to 'boundry_box', the worm to 'elastic_1', liquids to 'liquid_1', 'liquid_2', etc.  If wanted the numbers parts can be changed to any other description, all objects need unique names.  See above image for naming example.
+
+Add muscles:
+<br>Create a material with the name 'muscle' and make it red.  Go into edit mode in the worm and select the faces (using face select mode if wanted) that are wanted to be muscle connections.  Assign the 'muscle' material to the faces that are wanted to be muscles.  A different color material can be used for the rest of the faces.
+<center><a target="_blank" href='http://i.imgur.com/GBQVX8v.jpg'><img src='http://i.imgur.com/GBQVX8v.jpg height='113' width='400'><br>Example Image</a></center>
 
 ## Part III: Exporting the worm in blender
 It is recommended to delete the camera and lamp from the scene because they will not be used.
