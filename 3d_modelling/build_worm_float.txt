@@ -1,0 +1,4 @@
+The proto_down_wrm_float_test files are included for testing purposes.  An example linux command used to build the config file for Sibernetic is below.
+
+$ cd <base directory for sibernetic_config_gen>
+$ python main.py -i ./3d_modelling/proto_down_wrm_float_test.dae -o ./configurations/proto_down_wrm_float_test --dsca 100.0 --dexp 1.5
